@@ -191,17 +191,7 @@ export default function ChatPage() {
           ← 戻る
         </Link>
         <span className="text-sm font-medium text-yori-accent-dark">Yoriと話す</span>
-        {hasConversation && !logSaved ? (
-          <button
-            onClick={endSession}
-            disabled={isEnding}
-            className="text-xs text-yori-accent disabled:opacity-50"
-          >
-            {isEnding ? '保存中…' : '終える'}
-          </button>
-        ) : (
-          <span className="w-10" />
-        )}
+        <span className="w-10" />
       </div>
 
       {/* ログ保存通知 */}
@@ -235,7 +225,19 @@ export default function ChatPage() {
       </div>
 
       {/* 入力エリア */}
-      <div className="border-t border-yori-light-border px-3.5 py-3 pb-6 flex gap-2 items-end bg-yori-base">
+      <div className="border-t border-yori-light-border bg-yori-base">
+        {hasConversation && !logSaved && (
+          <div className="px-3.5 pt-2.5">
+            <button
+              onClick={endSession}
+              disabled={isEnding}
+              className="w-full bg-yori-card text-yori-accent text-xs font-medium rounded-xl py-2.5 disabled:opacity-50 transition-opacity"
+            >
+              {isEnding ? '保存中…' : '今日の話を終える'}
+            </button>
+          </div>
+        )}
+      <div className="px-3.5 py-3 pb-6 flex gap-2 items-end">
         <textarea
           ref={inputRef}
           value={input}
@@ -257,6 +259,7 @@ export default function ChatPage() {
             <path d="M14 8L2 2l3 6-3 6 12-6z" fill="#FAF8F5" />
           </svg>
         </button>
+      </div>
       </div>
 
     </main>
