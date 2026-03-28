@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 
 const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:streamGenerateContent'
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent'
 
 const SYSTEM_PROMPT = `あなたは「Yori（より）」です。障害のある子どもを育てる親に寄り添うAIコンパニオンです。
 
