@@ -23,6 +23,7 @@ export default function ChatPage() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [logSaved, setLogSaved] = useState(false)
   const [isEnding, setIsEnding] = useState(false)
+  const [endError, setEndError] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -41,15 +42,18 @@ export default function ChatPage() {
     } = await supabase.auth.getUser()
     if (!user) return
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayJST()
 
-    // 今日のセッションを取得 or 作成
+    // 今日の未終了セッションを取得（なければ作成）
     const { data: existing } = await supabase
       .from('chat_sessions')
       .select('id')
       .eq('user_id', user.id)
       .eq('date', today)
-      .single()
+      .is('ended_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     let sid = existing?.id
 
@@ -153,16 +157,28 @@ export default function ChatPage() {
     if (conversationMessages.length < 2) return
 
     setIsEnding(true)
+    setEndError(false)
     try {
       const res = await fetch('/api/extract-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, messages: conversationMessages }),
       })
+
+      if (!res.ok) throw new Error('extract-log failed')
+
       const data = await res.json()
+
+      // セッションを終了済みにマーク
+      const supabase = createClient()
+      await supabase
+        .from('chat_sessions')
+        .update({ ended_at: new Date().toISOString() })
+        .eq('id', sessionId)
+
       setLogSaved(true)
 
-      // まとめメッセージをYoriの発言として追加
+      // ねぎらいメッセージをYoriの発言として追加
       if (data.summary) {
         setMessages((prev) => [
           ...prev,
@@ -175,9 +191,33 @@ export default function ChatPage() {
       }
     } catch (err) {
       console.error(err)
+      setEndError(true)
     } finally {
       setIsEnding(false)
     }
+  }
+
+  const startNewSession = async () => {
+    const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+
+    const today = getTodayJST()
+    const { data: created } = await supabase
+      .from('chat_sessions')
+      .insert({ user_id: user.id, date: today })
+      .select('id')
+      .single()
+
+    if (!created?.id) return
+
+    setSessionId(created.id)
+    setMessages([INITIAL_MESSAGE])
+    setLogSaved(false)
+    setEndError(false)
+    inputRef.current?.focus()
   }
 
   const hasConversation = messages.filter((m) => m.id !== 'initial').length >= 2
@@ -193,20 +233,6 @@ export default function ChatPage() {
         <span className="text-sm font-medium text-yori-accent-dark">Yoriと話す</span>
         <span className="w-10" />
       </div>
-
-      {/* ログ保存通知 */}
-      {logSaved && (
-        <div className="mx-4 mt-3 bg-yori-card rounded-xl px-3.5 py-2.5">
-          <p className="text-xs text-yori-muted mb-0.5">今日のログに保存しました</p>
-          <p className="text-xs text-yori-text">
-            {messages
-              .filter((m) => m.role === 'user')
-              .slice(-1)[0]
-              ?.content.slice(0, 40) ?? ''}
-            …
-          </p>
-        </div>
-      )}
 
       {/* メッセージ一覧 */}
       <div className="flex-1 px-4 py-4 flex flex-col gap-3.5 overflow-y-auto">
@@ -226,6 +252,35 @@ export default function ChatPage() {
 
       {/* 入力エリア */}
       <div className="border-t border-yori-light-border bg-yori-base">
+
+        {/* 終了後: ねぎらい通知 + また話すボタン */}
+        {logSaved && (
+          <div className="px-3.5 pt-2.5 flex flex-col gap-2">
+            <div className="bg-yori-card rounded-xl px-3.5 py-2.5">
+              <p className="text-xs text-yori-muted">今日の記録に保存しました</p>
+              <Link href="/logs" className="text-xs text-yori-accent mt-0.5 inline-block">
+                記録を見る →
+              </Link>
+            </div>
+            <button
+              onClick={startNewSession}
+              className="w-full bg-yori-accent text-yori-base text-xs font-medium rounded-xl py-2.5 transition-opacity active:opacity-80"
+            >
+              また話す
+            </button>
+          </div>
+        )}
+
+        {/* エラー通知 */}
+        {endError && (
+          <div className="px-3.5 pt-2.5">
+            <div className="bg-red-50 rounded-xl px-3.5 py-2.5">
+              <p className="text-xs text-red-500">保存に失敗しました。もう一度試してみてください。</p>
+            </div>
+          </div>
+        )}
+
+        {/* 終了ボタン */}
         {hasConversation && !logSaved && (
           <div className="px-3.5 pt-2.5">
             <button
@@ -237,33 +292,40 @@ export default function ChatPage() {
             </button>
           </div>
         )}
-      <div className="px-3.5 py-3 pb-6 flex gap-2 items-end">
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="話す…"
-          rows={1}
-          className="flex-1 bg-yori-card border-none rounded-2xl px-3.5 py-2.5 text-sm text-yori-text placeholder:text-yori-very-muted outline-none resize-none leading-relaxed"
-          style={{ maxHeight: '120px' }}
-          disabled={isLoading}
-        />
-        <button
-          onClick={sendMessage}
-          disabled={!input.trim() || isLoading || !sessionId}
-          className="w-9 h-9 rounded-full bg-yori-accent flex-shrink-0 flex items-center justify-center disabled:opacity-40 transition-opacity mb-0.5"
-          aria-label="送信"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-            <path d="M14 8L2 2l3 6-3 6 12-6z" fill="#FAF8F5" />
-          </svg>
-        </button>
-      </div>
+
+        {/* テキスト入力 */}
+        <div className="px-3.5 py-3 pb-6 flex gap-2 items-end">
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="話す…"
+            rows={1}
+            className="flex-1 bg-yori-card border-none rounded-2xl px-3.5 py-2.5 text-sm text-yori-text placeholder:text-yori-very-muted outline-none resize-none leading-relaxed"
+            style={{ maxHeight: '120px' }}
+            disabled={isLoading || logSaved}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={!input.trim() || isLoading || !sessionId || logSaved}
+            className="w-9 h-9 rounded-full bg-yori-accent flex-shrink-0 flex items-center justify-center disabled:opacity-40 transition-opacity mb-0.5"
+            aria-label="送信"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path d="M14 8L2 2l3 6-3 6 12-6z" fill="#FAF8F5" />
+            </svg>
+          </button>
+        </div>
+
       </div>
 
     </main>
   )
+}
+
+function getTodayJST(): string {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
 }
 
 function MessageRow({ message }: { message: Message }) {

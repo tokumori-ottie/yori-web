@@ -24,6 +24,15 @@ export default async function LogDetailPage({
 
   if (!log) notFound()
 
+  // このログに紐づくセッションのメッセージを取得
+  const { data: messages } = log.session_id
+    ? await supabase
+        .from('messages')
+        .select('id, role, content')
+        .eq('session_id', log.session_id)
+        .order('created_at', { ascending: true })
+    : { data: null }
+
   return (
     <main className="min-h-screen bg-yori-bg flex flex-col max-w-sm mx-auto">
 
@@ -66,6 +75,45 @@ export default async function LogDetailPage({
                   {tag}
                 </span>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* チャット履歴 */}
+        {messages && messages.length > 0 && (
+          <section>
+            <p className="text-xs text-yori-muted mb-2">このときの会話</p>
+            <div className="flex flex-col gap-2.5">
+              {messages.map((msg) => {
+                const isUser = msg.role === 'user'
+                return (
+                  <div
+                    key={msg.id}
+                    className={`flex gap-2 items-start ${isUser ? 'flex-row-reverse' : ''}`}
+                  >
+                    <div
+                      className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-medium ${
+                        isUser
+                          ? 'bg-yori-border text-yori-accent-dark'
+                          : 'bg-yori-avatar text-yori-base'
+                      }`}
+                    >
+                      {isUser ? '私' : 'よ'}
+                    </div>
+                    <div className="max-w-[200px]">
+                      <div
+                        className={`px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap ${
+                          isUser
+                            ? 'bg-yori-accent text-yori-base rounded-tl-xl rounded-bl-xl rounded-br-xl'
+                            : 'bg-yori-base border border-yori-light-border text-yori-text rounded-tr-xl rounded-br-xl rounded-bl-xl'
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </section>
         )}
