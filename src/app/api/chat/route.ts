@@ -1,9 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+const GEMINI_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent'
 
 const SYSTEM_PROMPT = `あなたは「Yori（より）」です。障害のある子どもを育てる親に寄り添うAIコンパニオンです。
 
@@ -55,46 +53,78 @@ export async function POST(request: Request) {
     content: message,
   })
 
-  const claudeMessages: ChatMessage[] = [
-    ...history.map((m) => ({ role: m.role, content: m.content })),
-    { role: 'user', content: message },
+  // Gemini用のメッセージ形式に変換
+  const contents = [
+    ...history.map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    })),
+    { role: 'user', parts: [{ text: message }] },
   ]
 
-  // Claude APIにストリーミングリクエスト
-  const stream = anthropic.messages.stream({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    messages: claudeMessages,
+  const apiKey = process.env.GEMINI_API_KEY
+  const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}&alt=sse`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents,
+      generationConfig: { maxOutputTokens: 1024 },
+    }),
   })
+
+  if (!res.ok || !res.body) {
+    const errText = await res.text()
+    console.error('Gemini API error:', errText)
+    return new Response('Gemini API error', { status: 500 })
+  }
 
   const readableStream = new ReadableStream({
     async start(controller) {
       let fullText = ''
+      const reader = res.body!.getReader()
+      const decoder = new TextDecoder()
 
       try {
-        for await (const chunk of stream) {
-          if (
-            chunk.type === 'content_block_delta' &&
-            chunk.delta.type === 'text_delta'
-          ) {
-            const text = chunk.delta.text
-            fullText += text
-            controller.enqueue(new TextEncoder().encode(text))
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const chunk = decoder.decode(value, { stream: true })
+          const lines = chunk.split('\n')
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            const data = line.slice(6).trim()
+            if (data === '[DONE]') continue
+
+            try {
+              const json = JSON.parse(data)
+              const text =
+                json?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+              if (text) {
+                fullText += text
+                controller.enqueue(new TextEncoder().encode(text))
+              }
+            } catch {
+              // パースエラーは無視
+            }
           }
         }
+      } catch (err) {
+        console.error('Streaming error:', err)
+        controller.error(err)
+        return
+      }
 
-        // AIの返答をDBに保存
+      // AIの返答をDBに保存
+      if (fullText) {
         await supabase.from('messages').insert({
           session_id: sessionId,
           user_id: user.id,
           role: 'assistant',
           content: fullText,
         })
-      } catch (err) {
-        console.error('Streaming error:', err)
-        controller.error(err)
-        return
       }
 
       controller.close()

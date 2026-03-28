@@ -1,9 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+const GEMINI_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 type Message = {
   role: 'user' | 'assistant'
@@ -25,7 +23,6 @@ export async function POST(request: Request) {
     messages: Message[]
   }
 
-  // セッションの日付を取得
   const { data: session } = await supabase
     .from('chat_sessions')
     .select('date')
@@ -53,19 +50,22 @@ ${conversationText}
   "tags": ["タグ1", "タグ2", "タグ3"]
 }
 
-タグは会話から読み取れるキーワード（例：きょうだい、発熱、ワンオペ、怒り、孤独感、など）を3つ程度選んでください。`
+タグは会話から読み取れるキーワード（例：きょうだい、発熱、ワンオペ、怒り、孤独感など）を3つ程度選んでください。`
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 512,
-      messages: [{ role: 'user', content: extractPrompt }],
+    const apiKey = process.env.GEMINI_API_KEY
+    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: extractPrompt }] }],
+        generationConfig: { maxOutputTokens: 512 },
+      }),
     })
 
-    const rawText =
-      response.content[0].type === 'text' ? response.content[0].text : ''
+    const json = await res.json()
+    const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 
-    // JSONを抽出（コードブロックがある場合も対応）
     const jsonMatch = rawText.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('No JSON found in response')
 
@@ -75,7 +75,6 @@ ${conversationText}
       tags: string[]
     }
 
-    // daily_logsに保存（同じ日付があればupsert）
     const { error } = await supabase.from('daily_logs').upsert(
       {
         user_id: user.id,
