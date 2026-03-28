@@ -43,6 +43,11 @@ export default function LoginPage() {
           <p className="text-xs text-yori-very-muted text-center leading-relaxed">
             話した内容はあなただけが見られます
           </p>
+          <p className="text-xs text-yori-very-muted text-center">
+            ログインすることで
+            <a href="/privacy" className="text-yori-muted underline underline-offset-2 mx-1">プライバシーポリシー</a>
+            に同意したものとみなします
+          </p>
         </div>
 
       </div>
