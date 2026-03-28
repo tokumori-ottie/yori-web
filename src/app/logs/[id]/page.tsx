@@ -62,6 +62,14 @@ export default async function LogDetailPage({
           </section>
         )}
 
+        {/* できたこと・成長 */}
+        {log.achievements && (
+          <section className="bg-yori-base border border-yori-card rounded-2xl px-4 py-4">
+            <p className="text-xs text-yori-avatar mb-1.5">できたこと・成長</p>
+            <p className="text-sm text-yori-text leading-relaxed">{log.achievements}</p>
+          </section>
+        )}
+
         {/* タグ */}
         {log.tags && (log.tags as string[]).length > 0 && (
           <section>

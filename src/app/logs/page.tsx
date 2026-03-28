@@ -12,7 +12,7 @@ export default async function LogsPage() {
 
   const { data: logs } = await supabase
     .from('daily_logs')
-    .select('id, date, events, feelings, tags')
+    .select('id, date, events, feelings, achievements, tags')
     .eq('user_id', user.id)
     .order('date', { ascending: false })
     .limit(30)
@@ -38,7 +38,12 @@ export default async function LogsPage() {
               <p className="text-sm text-yori-text leading-snug line-clamp-2">
                 {log.events ?? '（記録なし）'}
               </p>
-              {log.feelings && (
+              {log.achievements && (
+                <p className="text-xs text-yori-avatar leading-snug line-clamp-1">
+                  {log.achievements}
+                </p>
+              )}
+              {!log.achievements && log.feelings && (
                 <p className="text-xs text-yori-muted leading-snug line-clamp-1">
                   {log.feelings}
                 </p>
