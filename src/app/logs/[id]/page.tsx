@@ -97,5 +97,6 @@ function formatDate(dateStr: string) {
     month: 'long',
     day: 'numeric',
     weekday: 'short',
+    timeZone: 'Asia/Tokyo',
   })
 }

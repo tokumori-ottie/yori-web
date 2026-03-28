@@ -124,7 +124,7 @@ export default async function HomePage() {
 
 function CurrentTime() {
   const now = new Date()
-  const time = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+  const time = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })
   return <span>{time}</span>
 }
 
@@ -134,12 +134,13 @@ function TodayLabel() {
     month: 'numeric',
     day: 'numeric',
     weekday: 'short',
+    timeZone: 'Asia/Tokyo',
   })
-  const time = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+  const time = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })
   return <>{`今日 · ${label} ${time}`}</>
 }
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr)
-  return d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })
+  return d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', timeZone: 'Asia/Tokyo' })
 }
