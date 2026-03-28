@@ -47,11 +47,12 @@ ${conversationText}
 {
   "events": "今日起きた主な出来事を1〜2文で（事実ベース）",
   "feelings": "感じた気持ち・感情を1〜2文で",
+  "achievements": "子どもの成長・できるようになったこと・嬉しかった変化があれば1〜2文で。なければ null",
   "tags": ["タグ1", "タグ2", "タグ3"],
-  "summary": "今日話してくれたことへのねぎらいと共感のメッセージ。出来事と気持ちをやさしく言葉にして、最後に一言ねぎらう。2〜4文。押しつけがましくなく、温かく。"
+  "summary": "今日話してくれたことへのねぎらいと共感のメッセージ。しんどかったことも嬉しかったことも、やさしく言葉にして、最後に一言ねぎらう。2〜4文。押しつけがましくなく、温かく。"
 }
 
-タグは会話から読み取れるキーワード（例：きょうだい、発熱、ワンオペ、怒り、孤独感など）を3つ程度選んでください。`
+タグは会話から読み取れるキーワード（例：きょうだい、発熱、ワンオペ、怒り、孤独感、はじめてできた、成長など）を3つ程度選んでください。`
 
   try {
     const apiKey = process.env.GEMINI_API_KEY
@@ -73,6 +74,7 @@ ${conversationText}
     const extracted = JSON.parse(jsonMatch[0]) as {
       events: string
       feelings: string
+      achievements: string | null
       tags: string[]
       summary: string
     }
@@ -84,6 +86,7 @@ ${conversationText}
         date: session.date,
         events: extracted.events,
         feelings: extracted.feelings,
+        achievements: extracted.achievements ?? null,
         tags: extracted.tags,
       },
       { onConflict: 'user_id,date' }
