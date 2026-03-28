@@ -154,12 +154,25 @@ export default function ChatPage() {
 
     setIsEnding(true)
     try {
-      await fetch('/api/extract-log', {
+      const res = await fetch('/api/extract-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, messages: conversationMessages }),
       })
+      const data = await res.json()
       setLogSaved(true)
+
+      // まとめメッセージをYoriの発言として追加
+      if (data.summary) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `summary-${Date.now()}`,
+            role: 'assistant',
+            content: data.summary,
+          },
+        ])
+      }
     } catch (err) {
       console.error(err)
     } finally {

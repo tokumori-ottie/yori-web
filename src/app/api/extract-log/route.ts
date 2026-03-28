@@ -47,7 +47,8 @@ ${conversationText}
 {
   "events": "今日起きた主な出来事を1〜2文で（事実ベース）",
   "feelings": "感じた気持ち・感情を1〜2文で",
-  "tags": ["タグ1", "タグ2", "タグ3"]
+  "tags": ["タグ1", "タグ2", "タグ3"],
+  "summary": "今日話してくれたことへのねぎらいと共感のメッセージ。出来事と気持ちをやさしく言葉にして、最後に一言ねぎらう。2〜4文。押しつけがましくなく、温かく。"
 }
 
 タグは会話から読み取れるキーワード（例：きょうだい、発熱、ワンオペ、怒り、孤独感など）を3つ程度選んでください。`
@@ -73,6 +74,7 @@ ${conversationText}
       events: string
       feelings: string
       tags: string[]
+      summary: string
     }
 
     const { error } = await supabase.from('daily_logs').upsert(
@@ -89,7 +91,7 @@ ${conversationText}
 
     if (error) throw error
 
-    return Response.json({ ok: true, extracted })
+    return Response.json({ ok: true, extracted, summary: extracted.summary ?? '' })
   } catch (err) {
     console.error('Extract log error:', err)
     return new Response('Failed to extract log', { status: 500 })
