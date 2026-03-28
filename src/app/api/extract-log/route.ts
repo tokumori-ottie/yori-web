@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 
 const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent'
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent'
 
 type Message = {
   role: 'user' | 'assistant'
