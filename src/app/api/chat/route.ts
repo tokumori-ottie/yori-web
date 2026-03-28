@@ -37,6 +37,15 @@ type ChatMessage = {
   content: string
 }
 
+function calcAge(birthday: string): number {
+  const today = new Date()
+  const birth = new Date(birthday)
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+  return age
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient()
   const {
@@ -61,6 +70,30 @@ export async function POST(request: Request) {
     content: message,
   })
 
+  // プロフィールと子ども情報を取得してシステムプロンプトをパーソナライズ
+  const [{ data: profile }, { data: childrenData }] = await Promise.all([
+    supabase.from('profiles').select('parent_type').eq('id', user.id).single(),
+    supabase.from('children').select('nickname, birthday, gender').eq('user_id', user.id).order('birthday', { ascending: true }),
+  ])
+
+  const parentLabel = profile?.parent_type === 'mama' ? 'お母さん' : profile?.parent_type === 'papa' ? 'お父さん' : null
+
+  const childrenContext = childrenData && childrenData.length > 0
+    ? childrenData.map((c) => {
+        const age = calcAge(c.birthday)
+        const genderLabel = c.gender === 'boy' ? '男の子' : c.gender === 'girl' ? '女の子' : 'お子さん'
+        return c.nickname ? `${c.nickname}（${age}歳・${genderLabel}）` : `${age}歳の${genderLabel}`
+      }).join('、')
+    : null
+
+  const personalContext = [parentLabel, childrenContext]
+    .filter(Boolean)
+    .join(' / お子さん: ')
+
+  const systemPrompt = personalContext
+    ? `${SYSTEM_PROMPT}\n\n【話している相手の情報】\n- ${parentLabel ?? 'ご利用者'}さん\n- お子さん: ${childrenContext}`
+    : SYSTEM_PROMPT
+
   // Gemini用のメッセージ形式に変換
   const contents = [
     ...history.map((m) => ({
@@ -75,7 +108,7 @@ export async function POST(request: Request) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      system_instruction: { parts: [{ text: systemPrompt }] },
       contents,
       generationConfig: { maxOutputTokens: 1024 },
     }),

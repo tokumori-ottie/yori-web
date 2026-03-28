@@ -11,6 +11,15 @@ export default async function HomePage() {
 
   if (!user) redirect('/')
 
+  // オンボーディング未完了ならリダイレクト
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('parent_type')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.parent_type) redirect('/onboarding')
+
   const { data: logs } = await supabase
     .from('daily_logs')
     .select('id, date, events, feelings, tags')
