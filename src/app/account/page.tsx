@@ -61,7 +61,7 @@ export default function AccountPage() {
             <span className="text-yori-muted text-xs">→</span>
           </Link>
           <a
-            href="mailto:yori.app.contact@gmail.com"
+            href="mailto:tokumori.pudding@gmail.com"
             className="px-4 py-3.5 text-sm text-yori-text flex justify-between items-center"
           >
             お問い合わせ

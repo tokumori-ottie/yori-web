@@ -96,7 +96,7 @@ export default function PrivacyPage() {
           <h2 className="text-sm font-medium">お問い合わせ</h2>
           <p className="text-xs leading-relaxed text-yori-muted">
             個人情報の取り扱いに関するご質問は、以下までご連絡ください。<br />
-            <span className="text-yori-accent">yori.app.contact@gmail.com</span>
+            <span className="text-yori-accent">tokumori.pudding@gmail.com</span>
           </p>
         </section>
 
