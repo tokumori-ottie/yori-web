@@ -46,8 +46,8 @@ export async function GET(request: Request) {
         .eq('session_id', session.id)
         .order('created_at', { ascending: true })
 
-      // メッセージが少なすぎる場合はスキップ（ended_atだけ更新）
-      if (!messages || messages.length < 2) {
+      // ユーザーが一度も話していない場合はスキップ（ended_atだけ更新）
+      if (!messages || !messages.some((m) => m.role === 'user')) {
         await supabase
           .from('chat_sessions')
           .update({ ended_at: new Date().toISOString() })
