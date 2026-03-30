@@ -239,14 +239,6 @@ export default function ChatPage() {
         {messages.map((msg) => (
           <MessageRow key={msg.id} message={msg} />
         ))}
-        {isLoading && messages[messages.length - 1]?.content === '' && (
-          <div className="flex gap-2 items-start">
-            <Avatar label="よ" />
-            <div className="bg-yori-base border border-yori-light-border rounded-tr-2xl rounded-br-2xl rounded-bl-2xl px-3 py-2.5">
-              <LoadingDots />
-            </div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -351,7 +343,7 @@ function MessageRow({ message }: { message: Message }) {
       <Avatar label="よ" />
       <div className="max-w-[220px]">
         <div className="bg-yori-base border border-yori-light-border rounded-tr-2xl rounded-br-2xl rounded-bl-2xl px-3 py-2.5 text-sm text-yori-text leading-relaxed whitespace-pre-wrap">
-          {message.content}
+          {message.content ? message.content : <LoadingDots />}
         </div>
       </div>
     </div>
