@@ -41,15 +41,26 @@ ${conversationText}
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: extractPrompt }] }],
-      generationConfig: { maxOutputTokens: 512 },
+      generationConfig: {
+        maxOutputTokens: 1024,
+        responseMimeType: 'application/json',
+      },
     }),
   })
 
   const json = await res.json()
   const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 
+  if (!rawText) {
+    console.error('Gemini extract-log empty response:', JSON.stringify(json))
+    throw new Error('Empty response from Gemini')
+  }
+
   const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error('No JSON found in Gemini response')
+  if (!jsonMatch) {
+    console.error('Gemini extract-log raw text:', rawText)
+    throw new Error('No JSON found in Gemini response')
+  }
 
   return JSON.parse(jsonMatch[0]) as ExtractedLog
 }
