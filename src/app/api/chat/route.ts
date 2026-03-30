@@ -1,7 +1,5 @@
+import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
-
-const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent'
 
 const SYSTEM_PROMPT = `あなたは「Yori（より）」です。障害のある子どもを育てる親の話を聞く対話パートナーです。
 目的は「安心して吐き出せること」と「必要に応じて思考整理を助けること」です。
@@ -90,7 +88,7 @@ export async function POST(request: Request) {
     history: ChatMessage[]
   }
 
-  // ユーザーメッセージのDB保存・プロフィール取得を並列実行してからGeminiを呼ぶ
+  // ユーザーメッセージのDB保存・プロフィール取得を並列実行
   const [, [{ data: profile }, { data: childrenData }]] = await Promise.all([
     supabase.from('messages').insert({
       session_id: sessionId,
@@ -114,70 +112,38 @@ export async function POST(request: Request) {
       }).join('、')
     : null
 
-  const personalContext = [parentLabel, childrenContext]
-    .filter(Boolean)
-    .join(' / お子さん: ')
-
-  const systemPrompt = personalContext
-    ? `${SYSTEM_PROMPT}\n\n【話している相手の情報】\n- ${parentLabel ?? 'ご利用者'}さん\n- お子さん: ${childrenContext}`
+  const systemPrompt = parentLabel
+    ? `${SYSTEM_PROMPT}\n\n【話している相手の情報】\n- ${parentLabel}さん\n- お子さん: ${childrenContext}`
     : SYSTEM_PROMPT
 
-  // Gemini用のメッセージ形式に変換
-  const contents = [
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+  const anthropicMessages = [
     ...history.map((m) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
     })),
-    { role: 'user', parts: [{ text: message }] },
+    { role: 'user' as const, content: message },
   ]
 
-  const apiKey = process.env.GEMINI_API_KEY
-  const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}&alt=sse`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
-      contents,
-      generationConfig: { maxOutputTokens: 1024 },
-    }),
+  const stream = client.messages.stream({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages: anthropicMessages,
   })
-
-  if (!res.ok || !res.body) {
-    const errText = await res.text()
-    console.error('Gemini API error:', errText)
-    return new Response('Gemini API error', { status: 500 })
-  }
 
   const readableStream = new ReadableStream({
     async start(controller) {
       let fullText = ''
-      const reader = res.body!.getReader()
-      const decoder = new TextDecoder()
-
       try {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-
-          const chunk = decoder.decode(value, { stream: true })
-          const lines = chunk.split('\n')
-
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue
-            const data = line.slice(6).trim()
-            if (data === '[DONE]') continue
-
-            try {
-              const json = JSON.parse(data)
-              const text =
-                json?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-              if (text) {
-                fullText += text
-                controller.enqueue(new TextEncoder().encode(text))
-              }
-            } catch {
-              // パースエラーは無視
-            }
+        for await (const event of stream) {
+          if (
+            event.type === 'content_block_delta' &&
+            event.delta.type === 'text_delta'
+          ) {
+            fullText += event.delta.text
+            controller.enqueue(new TextEncoder().encode(event.delta.text))
           }
         }
       } catch (err) {
