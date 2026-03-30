@@ -37,9 +37,11 @@ export default function ChatPage() {
 
   const initSession = async () => {
     const supabase = createClient()
+    // getSession はローカルキャッシュから読むため getUser より高速
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
+      data: { session },
+    } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
 
     const today = getTodayJST()
@@ -57,6 +59,11 @@ export default function ChatPage() {
 
     let sid = existing?.id
 
+    // 既存セッションがあればメッセージ取得を並列で開始、なければ新規作成
+    const messagesPromise = sid
+      ? supabase.from('messages').select('id, role, content').eq('session_id', sid).order('created_at', { ascending: true })
+      : null
+
     if (!sid) {
       const { data: created } = await supabase
         .from('chat_sessions')
@@ -69,12 +76,10 @@ export default function ChatPage() {
     if (!sid) return
     setSessionId(sid)
 
-    // 既存メッセージをロード
-    const { data: existingMsgs } = await supabase
-      .from('messages')
-      .select('id, role, content')
-      .eq('session_id', sid)
-      .order('created_at', { ascending: true })
+    // 既存メッセージをロード（並列で取得済みの場合はそれを使う）
+    const { data: existingMsgs } = messagesPromise
+      ? await messagesPromise
+      : await supabase.from('messages').select('id, role, content').eq('session_id', sid).order('created_at', { ascending: true })
 
     if (existingMsgs && existingMsgs.length > 0) {
       setMessages(
@@ -200,8 +205,9 @@ export default function ChatPage() {
   const startNewSession = async () => {
     const supabase = createClient()
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
+      data: { session },
+    } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
 
     const today = getTodayJST()
