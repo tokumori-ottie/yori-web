@@ -90,18 +90,18 @@ export async function POST(request: Request) {
     history: ChatMessage[]
   }
 
-  // ユーザーメッセージをDBに保存
-  await supabase.from('messages').insert({
-    session_id: sessionId,
-    user_id: user.id,
-    role: 'user',
-    content: message,
-  })
-
-  // プロフィールと子ども情報を取得してシステムプロンプトをパーソナライズ
-  const [{ data: profile }, { data: childrenData }] = await Promise.all([
-    supabase.from('profiles').select('parent_type').eq('id', user.id).single(),
-    supabase.from('children').select('nickname, birthday, gender').eq('user_id', user.id).order('birthday', { ascending: true }),
+  // ユーザーメッセージのDB保存・プロフィール取得を並列実行してからGeminiを呼ぶ
+  const [, [{ data: profile }, { data: childrenData }]] = await Promise.all([
+    supabase.from('messages').insert({
+      session_id: sessionId,
+      user_id: user.id,
+      role: 'user',
+      content: message,
+    }),
+    Promise.all([
+      supabase.from('profiles').select('parent_type').eq('id', user.id).single(),
+      supabase.from('children').select('nickname, birthday, gender').eq('user_id', user.id).order('birthday', { ascending: true }),
+    ]),
   ])
 
   const parentLabel = profile?.parent_type === 'mama' ? 'お母さん' : profile?.parent_type === 'papa' ? 'お父さん' : null
