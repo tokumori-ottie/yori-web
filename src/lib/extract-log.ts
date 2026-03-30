@@ -26,14 +26,14 @@ ${conversationText}
 
 以下のJSON形式のみで返してください（説明文は不要）:
 {
-  "events": "今日起きた主な出来事を1〜2文で（事実ベース）",
-  "feelings": "感じた気持ち・感情を1〜2文で",
-  "achievements": "子どもの成長・できるようになったこと・嬉しかった変化があれば1〜2文で。なければ null",
+  "events": "主な出来事を1文で簡潔に（事実ベース）",
+  "feelings": "感じた気持ちを1文で簡潔に",
+  "achievements": "子どもの成長・できたことがあれば1文で。なければ null",
   "tags": ["タグ1", "タグ2", "タグ3"],
-  "summary": "今日話してくれたことへのねぎらいと共感のメッセージ。しんどかったことも嬉しかったことも、やさしく言葉にして、最後に一言ねぎらう。2〜4文。押しつけがましくなく、温かく。"
+  "summary": "ねぎらいと共感を2文以内で。温かく、簡潔に。"
 }
 
-タグは会話から読み取れるキーワード（例：きょうだい、発熱、ワンオペ、怒り、孤独感、はじめてできた、成長など）を3つ程度選んでください。`
+タグは会話のキーワードを3つ程度（例：発熱、ワンオペ、成長、きょうだい）。`
 
   const apiKey = process.env.GEMINI_API_KEY
   const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
@@ -42,7 +42,7 @@ ${conversationText}
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: extractPrompt }] }],
       generationConfig: {
-        maxOutputTokens: 1024,
+        maxOutputTokens: 2048,
         responseMimeType: 'application/json',
       },
     }),
