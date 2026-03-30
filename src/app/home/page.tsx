@@ -61,7 +61,7 @@ export default async function HomePage() {
               よ
             </div>
             <div className="bg-yori-base rounded-tr-2xl rounded-br-2xl rounded-bl-2xl px-3 py-2.5 text-xs text-yori-text leading-relaxed flex-1">
-              少しだけ、話してみませんか。うまく話せなくて大丈夫です。
+              今日感じたこと、子どもとのこと。なんでもここに置いていってください。
             </div>
           </div>
         </div>
