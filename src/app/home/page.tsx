@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import WeeklySummaryCard from './WeeklySummaryCard'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -18,6 +19,9 @@ export default async function HomePage() {
     .single()
 
   if (!profile?.parent_type) redirect('/onboarding')
+
+  const isSundayJST =
+    new Date().toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Tokyo' }) === 'Sun'
 
   const { data: logs } = await supabase
     .from('daily_logs')
@@ -69,6 +73,9 @@ export default async function HomePage() {
         >
           話す
         </Link>
+
+        {/* 週次サマリー（日曜日のみ表示） */}
+        {isSundayJST && <WeeklySummaryCard />}
 
         {/* 最近の記録 */}
         {logs && logs.length > 0 ? (

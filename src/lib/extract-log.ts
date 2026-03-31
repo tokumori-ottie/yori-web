@@ -11,6 +11,7 @@ export type ExtractedLog = {
   achievements: string | null
   tags: string[]
   summary: string
+  mood_score: number  // -2: とても辛い, -1: しんどい, 0: 普通, +1: 良かった, +2: 嬉しい・充実
 }
 
 export async function extractLogFromMessages(messages: Message[]): Promise<ExtractedLog> {
@@ -29,10 +30,12 @@ ${conversationText}
   "feelings": "感じた気持ちを1文で簡潔に",
   "achievements": "子どもの成長・できたことがあれば1文で。なければ null",
   "tags": ["タグ1", "タグ2", "タグ3"],
-  "summary": "ねぎらいと共感を2文以内で。温かく、簡潔に。"
+  "summary": "ねぎらいと共感を2文以内で。温かく、簡潔に。",
+  "mood_score": 0
 }
 
-タグは会話のキーワードを3つ程度（例：発熱、ワンオペ、成長、きょうだい）。`
+タグは会話のキーワードを3つ程度（例：発熱、ワンオペ、成長、きょうだい）。
+mood_score は会話全体の感情トーンを -2〜+2 の整数で評価する（-2: とても辛い, -1: しんどい, 0: 普通・中立, +1: 良かった, +2: 嬉しい・充実）。`
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
