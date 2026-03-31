@@ -24,7 +24,7 @@ export default async function HomePage() {
     .from('daily_logs')
     .select('id, date, events, feelings, tags')
     .eq('user_id', user.id)
-    .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(7)
 
   return (

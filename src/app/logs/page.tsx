@@ -12,10 +12,27 @@ export default async function LogsPage() {
 
   const { data: logs } = await supabase
     .from('daily_logs')
-    .select('id, date, events, feelings, achievements, tags')
+    .select('id, date, events, feelings, achievements, tags, created_at')
     .eq('user_id', user.id)
-    .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(30)
+
+  // 同じ日付が複数あるか把握する（セッション番号表示用）
+  const dateCounts: Record<string, number> = {}
+  if (logs) {
+    for (const log of logs) {
+      dateCounts[log.date] = (dateCounts[log.date] ?? 0) + 1
+    }
+  }
+
+  // 同日内でのセッション番号を付与（古い順に1, 2, ...）
+  const dateIndexMap: Record<string, number> = {}
+  const logsWithIndex = logs
+    ? [...logs].reverse().map((log) => {
+        dateIndexMap[log.date] = (dateIndexMap[log.date] ?? 0) + 1
+        return { ...log, sessionIndex: dateIndexMap[log.date] }
+      }).reverse()
+    : []
 
   return (
     <main className="min-h-screen bg-yori-bg flex flex-col max-w-sm mx-auto">
@@ -27,14 +44,19 @@ export default async function LogsPage() {
       </div>
 
       <div className="flex-1 px-4 py-4 flex flex-col gap-2.5">
-        {logs && logs.length > 0 ? (
-          logs.map((log) => (
+        {logsWithIndex.length > 0 ? (
+          logsWithIndex.map((log) => (
             <Link
               key={log.id}
               href={`/logs/${log.id}`}
               className="bg-yori-base border border-yori-light-border rounded-2xl px-4 py-3.5 flex flex-col gap-1.5"
             >
-              <p className="text-xs text-yori-muted">{formatDate(log.date)}</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-xs text-yori-muted">{formatDate(log.date)}</p>
+                {dateCounts[log.date] > 1 && (
+                  <p className="text-xs text-yori-very-muted">{log.sessionIndex}回目</p>
+                )}
+              </div>
               <p className="text-sm text-yori-text leading-snug line-clamp-2">
                 {log.events ?? '（記録なし）'}
               </p>

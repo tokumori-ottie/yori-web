@@ -72,7 +72,7 @@ export async function GET(request: Request) {
           achievements: extracted.achievements ?? null,
           tags: extracted.tags,
         },
-        { onConflict: 'user_id,date' }
+        { onConflict: 'session_id' }
       )
 
       // セッションを終了済みにマーク
