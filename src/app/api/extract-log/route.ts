@@ -40,7 +40,7 @@ export async function POST(request: Request) {
         achievements: extracted.achievements ?? null,
         tags: extracted.tags,
       },
-      { onConflict: 'user_id,date' }
+      { onConflict: 'session_id' }
     )
 
     if (error) throw error
