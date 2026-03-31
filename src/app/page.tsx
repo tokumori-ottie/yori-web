@@ -45,6 +45,8 @@ export default function LoginPage() {
           </p>
           <p className="text-xs text-yori-very-muted text-center">
             ログインすることで
+            <a href="/terms" className="text-yori-muted underline underline-offset-2 mx-1">利用規約</a>
+            および
             <a href="/privacy" className="text-yori-muted underline underline-offset-2 mx-1">プライバシーポリシー</a>
             に同意したものとみなします
           </p>
