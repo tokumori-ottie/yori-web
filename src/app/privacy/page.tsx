@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <div className="flex-1 px-5 py-6 flex flex-col gap-6 text-yori-text">
 
         <p className="text-xs text-yori-muted leading-relaxed">
-          最終更新日: 2025年7月1日
+          最終更新日: 2026年3月31日
         </p>
 
         <section className="flex flex-col gap-2">
