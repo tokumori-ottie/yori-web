@@ -122,7 +122,7 @@ export default function OnboardingPage() {
             <button
               key={type}
               onClick={() => setParentType(type)}
-              className={`flex-1 rounded-2xl py-4 text-sm font-medium transition-all ${
+              className={`flex-1 rounded-2xl py-4 text-sm font-medium transition-all active:opacity-75 ${
                 parentType === type
                   ? 'bg-yori-accent text-yori-base'
                   : 'bg-yori-base border border-yori-light-border text-yori-text'
@@ -150,7 +150,7 @@ export default function OnboardingPage() {
                 {children.length > 1 && (
                   <button
                     onClick={() => removeChild(index)}
-                    className="text-xs text-yori-muted"
+                    className="text-xs text-yori-muted active:opacity-75 transition-opacity"
                   >
                     削除
                   </button>
@@ -218,7 +218,7 @@ export default function OnboardingPage() {
                     <button
                       key={opt.value}
                       onClick={() => updateChild(index, 'gender', opt.value)}
-                      className={`flex-1 rounded-xl py-2 text-xs font-medium transition-all ${
+                      className={`flex-1 rounded-xl py-2 text-xs font-medium transition-all active:opacity-75 ${
                         child.gender === opt.value
                           ? 'bg-yori-accent text-yori-base'
                           : 'bg-yori-card text-yori-text'
@@ -234,7 +234,7 @@ export default function OnboardingPage() {
 
           <button
             onClick={addChild}
-            className="w-full rounded-2xl py-3 text-xs text-yori-accent border border-dashed border-yori-avatar bg-transparent"
+            className="w-full rounded-2xl py-3 text-xs text-yori-accent border border-dashed border-yori-avatar bg-transparent active:opacity-75 transition-opacity"
           >
             ＋ もう一人追加
           </button>
@@ -248,7 +248,7 @@ export default function OnboardingPage() {
       <button
         onClick={handleSubmit}
         disabled={!isValid() || isSubmitting}
-        className="w-full bg-yori-accent text-yori-base rounded-2xl py-4 text-sm font-medium disabled:opacity-40 transition-opacity"
+        className="w-full bg-yori-accent text-yori-base rounded-2xl py-4 text-sm font-medium disabled:opacity-40 active:opacity-75 transition-opacity"
       >
         {isSubmitting ? '保存中…' : 'はじめる'}
       </button>
