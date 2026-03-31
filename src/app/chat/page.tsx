@@ -296,12 +296,16 @@ export default function ChatPage() {
           <textarea
             ref={inputRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value)
+              e.target.style.height = 'auto'
+              e.target.style.height = `${e.target.scrollHeight}px`
+            }}
             onKeyDown={handleKeyDown}
             placeholder="話す…"
             rows={1}
             className="flex-1 bg-yori-card border-none rounded-2xl px-3.5 py-2.5 text-sm text-yori-text placeholder:text-yori-very-muted outline-none resize-none leading-relaxed"
-            style={{ maxHeight: '120px' }}
+            style={{ maxHeight: '160px', overflowY: 'auto' }}
             disabled={isLoading || logSaved}
           />
           <button

@@ -117,7 +117,7 @@ export default async function HomePage() {
       </div>
 
       {/* タブバー */}
-      <div className="flex border-t border-yori-light-border bg-yori-base">
+      <div className="sticky bottom-0 flex border-t border-yori-light-border bg-yori-base">
         <div className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-accent">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path d="M3 10L10 3l7 7" stroke="#8B6F5E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
