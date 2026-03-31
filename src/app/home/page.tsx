@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import LogoutButton from '@/components/LogoutButton'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -38,10 +37,7 @@ export default async function HomePage() {
       {/* ナビ */}
       <nav className="flex items-center justify-between px-5 pb-3 border-b border-yori-light-border">
         <span className="text-lg font-medium text-yori-accent-dark tracking-tight">Yori</span>
-        <div className="flex items-center gap-3">
-          <Link href="/account" className="text-xs text-yori-muted">アカウント</Link>
-          <LogoutButton />
-        </div>
+        <Link href="/account" className="text-xs text-yori-muted">アカウント</Link>
       </nav>
 
       <div className="flex-1 px-4 py-5 flex flex-col gap-4 overflow-y-auto">
