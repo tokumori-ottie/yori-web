@@ -96,7 +96,7 @@ export default function TermsPage() {
           <h2 className="text-sm font-medium">お問い合わせ</h2>
           <p className="text-xs leading-relaxed text-yori-muted">
             本規約に関するご質問は、以下までご連絡ください。<br />
-            <span className="text-yori-accent">tokumori.pudding@gmail.com</span>
+            <span className="text-yori-accent">tokumori.ottie@gmail.com</span>
           </p>
         </section>
 
