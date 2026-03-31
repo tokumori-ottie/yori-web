@@ -320,6 +320,13 @@ export default function AccountPage() {
             プライバシーポリシー
             <span className="text-yori-muted text-xs">→</span>
           </Link>
+          <Link
+            href="/terms"
+            className="px-4 py-3.5 text-sm text-yori-text flex justify-between items-center border-b border-yori-light-border active:opacity-75 transition-opacity"
+          >
+            利用規約
+            <span className="text-yori-muted text-xs">→</span>
+          </Link>
           <a
             href="mailto:tokumori.pudding@gmail.com"
             className="px-4 py-3.5 text-sm text-yori-text flex justify-between items-center active:opacity-75 transition-opacity"

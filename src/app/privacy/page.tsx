@@ -51,7 +51,7 @@ export default function PrivacyPage() {
           </p>
           <ul className="text-xs leading-relaxed text-yori-muted flex flex-col gap-1.5 list-disc list-inside">
             <li>
-              <span className="text-yori-text">Google Gemini API</span>
+              <span className="text-yori-text">Anthropic Claude API</span>
               　— AI応答の生成のため、チャット内容が送信されます
             </li>
             <li>
