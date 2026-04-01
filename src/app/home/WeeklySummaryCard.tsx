@@ -10,11 +10,11 @@ type SummaryResponse = {
 
 function moodDotStyle(score: number | null): string {
   if (score === null) return 'bg-transparent border border-yori-card'
-  if (score === -2) return 'bg-yori-text'
-  if (score === -1) return 'bg-yori-muted'
+  if (score === -2) return 'bg-red-400'
+  if (score === -1) return 'bg-red-200'
   if (score === 0) return 'bg-yori-card border border-yori-muted'
-  if (score === 1) return 'bg-yori-avatar'
-  return 'bg-yori-accent'
+  if (score === 1) return 'bg-blue-200'
+  return 'bg-blue-400'
 }
 
 function MoodChart({ entries }: { entries: MoodChartEntry[] }) {

@@ -16,12 +16,12 @@ type Log = {
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
 function moodDotClass(score: number | null): string {
-  if (score === -2) return 'bg-yori-text'
-  if (score === -1) return 'bg-yori-muted'
+  if (score === -2) return 'bg-red-400'
+  if (score === -1) return 'bg-red-200'
   if (score === 0) return 'bg-yori-card border border-yori-muted'
-  if (score === 1) return 'bg-yori-avatar'
-  if (score === 2) return 'bg-yori-accent'
-  return 'bg-yori-avatar'
+  if (score === 1) return 'bg-blue-200'
+  if (score === 2) return 'bg-blue-400'
+  return 'bg-yori-card border border-yori-muted'
 }
 
 function formatDate(dateStr: string) {
