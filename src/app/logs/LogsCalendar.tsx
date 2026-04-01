@@ -126,8 +126,9 @@ export default function LogsCalendar({ logs }: { logs: Log[] }) {
             const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
             const dayLogs = dateMap[dateStr]
             const isToday = dateStr === todayStr
-            const latestLog = dayLogs?.[0]
-            const hasMultiple = (dayLogs?.length ?? 0) > 1
+            const latestLog = dayLogs?.reduce((prev, curr) =>
+              Math.abs(curr.mood_score ?? 0) > Math.abs(prev.mood_score ?? 0) ? curr : prev
+            )
 
             return (
               <div key={dateStr} className="flex flex-col items-center h-10 justify-start pt-0.5">
@@ -145,12 +146,7 @@ export default function LogsCalendar({ logs }: { logs: Log[] }) {
                     >
                       {day}
                     </span>
-                    <span className="flex gap-0.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${moodDotClass(latestLog.mood_score)}`} />
-                      {hasMultiple && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-yori-card border border-yori-muted" />
-                      )}
-                    </span>
+                    <span className={`w-1.5 h-1.5 rounded-full ${moodDotClass(latestLog.mood_score)}`} />
                   </Link>
                 ) : (
                   <span
