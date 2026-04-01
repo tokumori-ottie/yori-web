@@ -105,15 +105,23 @@ export async function POST(request: Request) {
   const parentLabel = profile?.parent_type === 'mama' ? 'お母さん' : profile?.parent_type === 'papa' ? 'お父さん' : null
 
   const childrenContext = childrenData && childrenData.length > 0
-    ? childrenData.map((c) => {
+    ? childrenData.map((c, i) => {
         const age = calcAge(c.birthday)
         const genderLabel = c.gender === 'boy' ? '男の子' : c.gender === 'girl' ? '女の子' : 'お子さん'
-        return c.nickname ? `${c.nickname}（${age}歳・${genderLabel}）` : `${age}歳の${genderLabel}`
+        const orderLabel = childrenData.length > 1
+          ? (i === 0 ? '長男・長女' : i === 1 ? '次男・次女' : `${i + 1}番目の子`)
+          : null
+        const nameLabel = c.nickname ? c.nickname : `${age}歳の${genderLabel}`
+        return orderLabel ? `${nameLabel}（${age}歳・${genderLabel}・${orderLabel}）` : `${nameLabel}（${age}歳・${genderLabel}）`
       }).join('、')
     : null
 
+  const nicknameInstruction = childrenData && childrenData.some(c => c.nickname)
+    ? '\n- ユーザーが「長男」「次男」「長女」「次女」などと言った場合、対応するお子さんのニックネームで呼ぶ'
+    : ''
+
   const systemPrompt = parentLabel
-    ? `${SYSTEM_PROMPT}\n\n【話している相手の情報】\n- ${parentLabel}さん\n- お子さん: ${childrenContext}`
+    ? `${SYSTEM_PROMPT}${nicknameInstruction}\n\n【話している相手の情報】\n- ${parentLabel}さん\n- お子さん: ${childrenContext}`
     : SYSTEM_PROMPT
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
