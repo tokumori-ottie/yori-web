@@ -172,7 +172,7 @@ NO_SEARCH`,
       const context = results
         .map((r) => `・${r.title}\n${r.content.slice(0, 200)}`)
         .join('\n\n')
-      systemFinal = `${systemPrompt}\n\n【参考情報（Web検索結果）】\n${context}\n\n※上記はあくまで参考です。Yoriとして共感・傾聴を軸に、必要な情報を自然な言葉で伝えてください。`
+      systemFinal = `${systemPrompt}\n\n【Web検索で取得した最新情報】\n${context}\n\n上記の検索結果を使って、施設名・サービス名・連絡先など具体的な情報をYoriのやさしいトーンでお伝えください。情報が見つかった場合は「調べてみました」と自然に伝えてください。`
     }
   }
 
