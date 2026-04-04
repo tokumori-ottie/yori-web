@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import WeeklySummaryCard from './WeeklySummaryCard'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -20,15 +19,26 @@ export default async function HomePage() {
 
   if (!profile?.parent_type) redirect('/onboarding')
 
-  const isSundayJST =
-    new Date().toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Tokyo' }) === 'Sun'
+  // レポートバナー: 週次または月次サマリーがキャッシュ済みか確認
+  const weekStartStr = getWeekStartJST()
+  const monthStartStr = getPrevMonthStartJST()
 
-  const { data: logs } = await supabase
-    .from('daily_logs')
-    .select('id, date, events, feelings, tags')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(7)
+  const [{ data: weeklyCached }, { data: monthlyCached }] = await Promise.all([
+    supabase
+      .from('weekly_summaries')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('week_start', weekStartStr)
+      .maybeSingle(),
+    supabase
+      .from('monthly_summaries')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('month_start', monthStartStr)
+      .maybeSingle(),
+  ])
+
+  const hasReport = !!(weeklyCached || monthlyCached)
 
   return (
     <main className="min-h-screen bg-yori-bg flex flex-col max-w-sm mx-auto">
@@ -74,44 +84,20 @@ export default async function HomePage() {
           話す
         </Link>
 
-        {/* 週次サマリー（日曜日のみ表示） */}
-        {isSundayJST && <WeeklySummaryCard />}
-
-        {/* 最近の記録 */}
-        {logs && logs.length > 0 ? (
-          <div>
-            <p className="text-xs text-yori-muted tracking-wide mb-2">今週の記録</p>
-            <div className="flex flex-col gap-2">
-              {logs.map((log) => (
-                <Link
-                  key={log.id}
-                  href={`/logs/${log.id}`}
-                  className="bg-yori-base border border-yori-light-border rounded-2xl px-3.5 py-3 flex gap-3 items-start active:opacity-75 transition-opacity"
-                >
-                  <span className="text-xs text-yori-muted flex-shrink-0 pt-0.5">
-                    {formatDate(log.date)}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xs text-yori-text leading-snug line-clamp-2">
-                      {log.events ?? '（記録なし）'}
-                    </p>
-                    {log.feelings && (
-                      <span className="inline-block text-xs text-yori-accent bg-yori-card rounded-full px-2 py-0.5 mt-1.5">
-                        {log.feelings.split('、')[0].slice(0, 12)}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))}
+        {/* レポートバナー */}
+        {hasReport && (
+          <Link
+            href="/reports"
+            className="flex items-center justify-between bg-yori-base border border-yori-light-border rounded-2xl px-4 py-3.5 active:opacity-75 transition-opacity"
+          >
+            <div>
+              <p className="text-xs font-medium text-yori-accent-dark">
+                {monthlyCached ? '先月のまとめができています' : '今週のまとめができています'}
+              </p>
+              <p className="text-[11px] text-yori-muted mt-0.5">レポートで確認する</p>
             </div>
-          </div>
-        ) : (
-          <div className="text-center py-10">
-            <p className="text-xs text-yori-muted leading-relaxed">
-              まだ記録はありません。<br />
-              話すと、自動で記録されます。
-            </p>
-          </div>
+            <span className="text-yori-muted text-xs">→</span>
+          </Link>
         )}
 
       </div>
@@ -131,10 +117,35 @@ export default async function HomePage() {
           </svg>
           <span className="text-[10px]">記録</span>
         </Link>
+        <Link href="/reports" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75 transition-opacity">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+            <path d="M3 14l4-4 3 3 4-5 3 3" stroke="#B5A89E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-[10px]">レポート</span>
+        </Link>
       </div>
 
     </main>
   )
+}
+
+function getWeekStartJST(): string {
+  const jstDateStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
+  const jstDate = new Date(jstDateStr + 'T00:00:00')
+  const dayOfWeek = jstDate.getDay()
+  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+  jstDate.setDate(jstDate.getDate() - daysFromMonday)
+  return jstDate.toLocaleDateString('sv-SE')
+}
+
+function getPrevMonthStartJST(): string {
+  const jstDateStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
+  const jstDate = new Date(jstDateStr + 'T00:00:00')
+  const year = jstDate.getFullYear()
+  const month = jstDate.getMonth()
+  const prevYear = month === 0 ? year - 1 : year
+  const prevMonth = month === 0 ? 12 : month
+  return `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`
 }
 
 function CurrentTime() {
@@ -153,9 +164,4 @@ function TodayLabel() {
   })
   const time = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })
   return <>{`今日 · ${label} ${time}`}</>
-}
-
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', timeZone: 'Asia/Tokyo' })
 }

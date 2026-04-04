@@ -55,6 +55,12 @@ export default async function LogsPage() {
           </svg>
           <span className="text-[10px]">記録</span>
         </div>
+        <Link href="/reports" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75 transition-opacity">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+            <path d="M3 14l4-4 3 3 4-5 3 3" stroke="#B5A89E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-[10px]">レポート</span>
+        </Link>
       </div>
 
     </main>
