@@ -150,11 +150,16 @@ NO_SEARCH`,
   const intentText =
     intentCheck.content[0].type === 'text' ? intentCheck.content[0].text.trim() : 'NO_SEARCH'
 
+  console.log('[search] intentText:', intentText)
+  console.log('[search] TAVILY_API_KEY set:', !!process.env.TAVILY_API_KEY)
+
   // フェーズ2: 必要なら検索してsystem promptに注入
   let systemFinal = systemPrompt
   if (intentText.startsWith('SEARCH:')) {
     const query = intentText.replace('SEARCH:', '').trim()
+    console.log('[search] query:', query)
     const results = await searchWeb(query)
+    console.log('[search] results count:', results.length)
     if (results.length > 0) {
       const context = results
         .map((r) => `・${r.title}\n${r.content.slice(0, 200)}`)
