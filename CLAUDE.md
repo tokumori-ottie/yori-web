@@ -17,10 +17,11 @@ src/
   app/
     page.tsx              # ログインページ（Googleログインボタン）
     onboarding/page.tsx   # 初回オンボーディング（パパ/ママ・子ども情報入力）
-    home/page.tsx         # ホーム（最近の記録一覧、チャットへの導線、週次サマリーカード）
-    home/WeeklySummaryCard.tsx  # 週次サマリーカード（日曜日のみ表示・クライアント）
+    home/page.tsx         # ホーム（挨拶カード・話すボタン・レポートバナー）
+    home/WeeklySummaryCard.tsx  # 週次サマリーカード（レポートページに移動済み・未使用）
     chat/page.tsx         # チャットUI（ストリーミング対応、セッション管理）
     logs/page.tsx         # 記録一覧（カレンダー＋リスト形式）
+    reports/page.tsx      # レポート（月次サマリー＋週次サマリー・クライアント）
     logs/LogsCalendar.tsx # カレンダーUIコンポーネント（クライアント）
     logs/[id]/page.tsx    # 記録詳細（チャット履歴も表示）
     account/page.tsx      # アカウント（プロフィール編集・ログアウト・退会）
@@ -31,6 +32,7 @@ src/
       chat/route.ts           # Claude SSEストリーミング、メッセージDB保存、プロフィール注入、Web検索（2フェーズ）
       extract-log/route.ts    # 会話からログ抽出（events/feelings/achievements/tags/summary/mood_score）
       weekly-summary/route.ts # 週次サマリー生成（オンデマンド＋キャッシュ）
+      monthly-summary/route.ts # 月次サマリー生成（オンデマンド＋キャッシュ）
       cron/close-sessions/    # 日付をまたいだ未終了セッションを自動クローズ（Vercel Cron）
       delete-account/         # アカウント削除（service roleで全データ削除）
   lib/
@@ -40,6 +42,7 @@ src/
     extract-log.ts          # ログ抽出ロジック（Anthropic SDK、chat/cronで共用）
     web-search.ts           # Tavily Web Search ユーティリティ
     generate-weekly-summary.ts  # 週次サマリー生成ロジック（Anthropic SDK）
+    generate-monthly-summary.ts # 月次サマリー生成ロジック（Anthropic SDK）
   middleware.ts           # Supabaseセッション更新
 supabase/
   schema.sql              # テーブル定義の参照用
@@ -50,6 +53,7 @@ supabase/
     004_daily_logs_per_session.sql
     005_daily_logs_mood_score.sql
     006_weekly_summaries.sql
+    007_monthly_summaries.sql
 vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
 ```
 
@@ -70,6 +74,9 @@ vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
 - `weekly_summaries` - 週次サマリーキャッシュ（`user_id + week_start` でユニーク）
   - `week_start`: その週の月曜日（date型）
   - `content`: サマリー内容（jsonb。mood_chart・emotion_summary・notable_events・achievements・insight・encouragement）
+- `monthly_summaries` - 月次サマリーキャッシュ（`user_id + month_start` でユニーク）
+  - `month_start`: その月の1日（date型、YYYY-MM-01）
+  - `content`: サマリー内容（jsonb。summary・child_growth・top_tags・encouragement）
 
 ## セッション管理のしくみ
 
@@ -79,9 +86,15 @@ vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
 - 記録詳細（`/logs/[id]`）からそのセッションのチャット履歴を参照できる
 - **自動クローズ（Vercel Cron）**: 毎日0時JST（UTC 15:00）に前日以前の未終了セッションを自動処理。ユーザーが一度も話していないセッションはログ保存せずに終了マークのみ付与
 
-## 週次サマリーのしくみ
+## レポートページ（`/reports`）
 
-- 日曜日にホームを開くと `WeeklySummaryCard` が表示される
+3タブ構成（ホーム / 記録 / レポート）のうちのレポートタブ。クライアントコンポーネントで各APIを叩き、オンデマンドで生成・表示する。
+
+- **月次まとめ**: `/api/monthly-summary` を呼び出し、前月のサマリーを表示
+- **週次まとめ**: `/api/weekly-summary` を呼び出し、当週のサマリーを表示
+
+### 週次サマリーのしくみ
+
 - `/api/weekly-summary` を呼び出し、`weekly_summaries` にキャッシュがあれば即返す
 - キャッシュがなければ当週（月〜日）の `daily_logs` を取得し、Claudeでサマリーを生成・保存
 - サマリーの内容:
@@ -92,6 +105,21 @@ vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
   - `insight`: 週のパターン・傾向（1つだけ）
   - `encouragement`: ねぎらい
 - ログが2件以下の週は `emotion_summary` と `encouragement` のみ出力
+
+### 月次サマリーのしくみ
+
+- `/api/monthly-summary` を呼び出し、`monthly_summaries` にキャッシュがあれば即返す
+- キャッシュがなければ前月の `daily_logs` を取得し、Claudeでサマリーを生成・保存
+- サマリーの内容:
+  - `summary`: 1ヶ月の感情の流れ・振り返りサマリー
+  - `child_growth`: 子どもの成長・できたことまとめ
+  - `top_tags`: よく出たタグ上位5件（タグ頻度集計、Claude不要）
+  - `encouragement`: ねぎらいメッセージ
+
+### ホームのバナー表示
+
+- Supabaseで `weekly_summaries` / `monthly_summaries` のキャッシュ有無を確認（APIコール不要）
+- キャッシュがあれば「先月のまとめができています」または「今週のまとめができています」バナーを表示 → /reports へ誘導
 
 ## Yoriのシステムプロンプト構成
 
