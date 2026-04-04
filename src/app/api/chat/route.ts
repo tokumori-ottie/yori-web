@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { searchWeb } from '@/lib/web-search'
 
 const SYSTEM_PROMPT = `あなたは「Yori（より）」です。障害のある子どもを育てる親の話を聞く対話パートナーです。
 目的は「安心して吐き出せること」と「必要に応じて思考整理を助けること」です。
@@ -134,10 +135,46 @@ export async function POST(request: Request) {
     { role: 'user' as const, content: message },
   ]
 
+  // フェーズ1: 検索が必要かどうかを判定
+  const intentCheck = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 60,
+    system: `ユーザーのメッセージを見て、Web検索が必要かどうかだけを判定してください。
+以下の場合のみ SEARCH と答えてください：
+- 地域の支援サービス・相談窓口・施設を探している
+- 制度・補助金・手続きなど最新情報が必要
+- 特定の療法・支援方法について詳しく調べたい
+
+感情の吐き出し・近況報告・悩みの共有は必ず NO_SEARCH。
+一般的な発達障害の特性などの基本知識も NO_SEARCH（Claudeが答えられるため）。
+
+必ず以下の形式のみで答えてください：
+SEARCH: <日本語の検索クエリ>
+または
+NO_SEARCH`,
+    messages: [{ role: 'user', content: message }],
+  })
+
+  const intentText =
+    intentCheck.content[0].type === 'text' ? intentCheck.content[0].text.trim() : 'NO_SEARCH'
+
+  // フェーズ2: 必要なら検索してsystem promptに注入
+  let systemFinal = systemPrompt
+  if (intentText.startsWith('SEARCH:')) {
+    const query = intentText.replace('SEARCH:', '').trim()
+    const results = await searchWeb(query)
+    if (results.length > 0) {
+      const context = results
+        .map((r) => `・${r.title}\n${r.content.slice(0, 200)}`)
+        .join('\n\n')
+      systemFinal = `${systemPrompt}\n\n【参考情報（Web検索結果）】\n${context}\n\n※上記はあくまで参考です。Yoriとして共感・傾聴を軸に、必要な情報を自然な言葉で伝えてください。`
+    }
+  }
+
   const stream = client.messages.stream({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
-    system: systemPrompt,
+    system: systemFinal,
     messages: anthropicMessages,
   })
 

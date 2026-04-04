@@ -6,7 +6,7 @@
 
 - **フレームワーク**: Next.js 15 (App Router) + TypeScript
 - **認証・DB**: Supabase（Google OAuthログイン、RLS有効）
-- **AI**: Anthropic Claude API（claude-haiku-4-5-20251001）
+- **AI**: Anthropic Claude API（claude-haiku-4-5-20251001）+ Tavily Web Search
 - **スタイル**: Tailwind CSS（カスタムカラーパレット）
 - **デプロイ**: Vercel（本番: https://yori-web-ruby.vercel.app）
 
@@ -149,6 +149,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ANTHROPIC_API_KEY=
 CRON_SECRET=
+TAVILY_API_KEY=
 ```
 
 ## カラーパレット（tailwind.config）
