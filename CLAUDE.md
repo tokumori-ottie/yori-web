@@ -25,7 +25,7 @@ src/
     privacy/page.tsx      # プライバシーポリシー
     auth/callback/        # Supabase OAuth コールバック
     api/
-      chat/route.ts           # Claude SSEストリーミング、メッセージDB保存、プロフィール注入
+      chat/route.ts           # Claude SSEストリーミング、メッセージDB保存、プロフィール注入、Web検索（2フェーズ）
       extract-log/route.ts    # 会話からログ抽出（events/feelings/achievements/tags/summary）
       cron/close-sessions/    # 日付をまたいだ未終了セッションを自動クローズ（Vercel Cron）
       delete-account/         # アカウント削除（service roleで全データ削除）
@@ -34,6 +34,7 @@ src/
       server.ts             # サーバーサイドSupabaseクライアント
       client.ts             # クライアントサイドSupabaseクライアント
     extract-log.ts          # ログ抽出ロジック（Anthropic SDK、chat/cronで共用）
+    web-search.ts           # Tavily Web Search ユーティリティ
   middleware.ts           # Supabaseセッション更新
 supabase/
   schema.sql              # テーブル定義の参照用
@@ -141,3 +142,19 @@ TAVILY_API_KEY=
 - マイグレーションファイルは `supabase/migrations/` に追加し、Supabaseダッシュボードの SQL Editor で手動実行する
 - Vercel Cron は `Authorization: Bearer {CRON_SECRET}` ヘッダーで認証する
 - ログ抽出（`lib/extract-log.ts`）は `max_tokens: 2048`。JSONをregexで抽出 (`\{[\s\S]*\}`)
+
+## Web検索のしくみ（`lib/web-search.ts` + `api/chat/route.ts`）
+
+チャットAPIでメッセージ受信後、ストリーミング開始前に2フェーズで処理する。
+
+**フェーズ1: 検索要否の判定**
+- 直近5件の会話履歴を使ってClaudeに「SEARCH: <クエリ>」か「NO_SEARCH」を返させる
+- 検索対象: 地域の支援サービス・施設・制度・手続き・療法の詳細情報
+- 非検索: 感情の吐き出し・近況報告・一般的な発達障害の知識
+
+**フェーズ2: 検索結果の注入**
+- `searchWeb(query)` でTavilyに問い合わせ、最大3件取得
+- 結果をsystem promptに追記してからストリーミング開始（ストリーミングループ自体は変更なし）
+- `TAVILY_API_KEY` 未設定・API失敗時は検索なしでフォールバック
+
+**SYSTEM_PROMPTへの明記**: Yoriが「検索できない」と言わないよう、system promptに検索機能があることを記載。
