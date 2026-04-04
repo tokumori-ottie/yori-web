@@ -141,7 +141,7 @@ export default function AccountPage() {
     return (
       <main className="min-h-screen bg-yori-bg flex flex-col max-w-sm mx-auto">
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-yori-light-border bg-yori-base">
-          <Link href="/home" className="text-xs text-yori-muted">← 戻る</Link>
+          <Link href="/home" className="text-xs text-yori-muted active:opacity-75 transition-opacity">← 戻る</Link>
           <span className="text-sm font-medium text-yori-accent-dark">アカウント</span>
           <span className="w-10" />
         </div>
@@ -156,7 +156,7 @@ export default function AccountPage() {
     <main className="min-h-screen bg-yori-bg flex flex-col max-w-sm mx-auto">
 
       <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-yori-light-border bg-yori-base">
-        <Link href="/home" className="text-xs text-yori-muted">← 戻る</Link>
+        <Link href="/home" className="text-xs text-yori-muted active:opacity-75 transition-opacity">← 戻る</Link>
         <span className="text-sm font-medium text-yori-accent-dark">アカウント</span>
         <span className="w-10" />
       </div>
@@ -175,7 +175,7 @@ export default function AccountPage() {
                 <button
                   key={type}
                   onClick={() => setParentType(type)}
-                  className={`flex-1 rounded-2xl py-3 text-sm font-medium transition-all ${
+                  className={`flex-1 rounded-2xl py-3 text-sm font-medium transition-all active:opacity-75 ${
                     parentType === type
                       ? 'bg-yori-accent text-yori-base'
                       : 'bg-yori-base border border-yori-light-border text-yori-text'
@@ -203,7 +203,7 @@ export default function AccountPage() {
                     {children.length > 1 && (
                       <button
                         onClick={() => setChildren((prev) => prev.filter((_, i) => i !== index))}
-                        className="text-xs text-yori-muted"
+                        className="text-xs text-yori-muted active:opacity-75 transition-opacity"
                       >
                         削除
                       </button>
@@ -262,7 +262,7 @@ export default function AccountPage() {
                         <button
                           key={opt.value}
                           onClick={() => updateChild(index, 'gender', opt.value)}
-                          className={`flex-1 rounded-xl py-2 text-xs font-medium transition-all ${
+                          className={`flex-1 rounded-xl py-2 text-xs font-medium transition-all active:opacity-75 ${
                             child.gender === opt.value
                               ? 'bg-yori-accent text-yori-base'
                               : 'bg-yori-card text-yori-text'
@@ -278,7 +278,7 @@ export default function AccountPage() {
 
               <button
                 onClick={() => setChildren((prev) => [...prev, { ...EMPTY_CHILD }])}
-                className="w-full rounded-2xl py-3 text-xs text-yori-accent border border-dashed border-yori-avatar bg-transparent"
+                className="w-full rounded-2xl py-3 text-xs text-yori-accent border border-dashed border-yori-avatar bg-transparent active:opacity-75 transition-opacity"
               >
                 ＋ もう一人追加
               </button>
@@ -290,7 +290,7 @@ export default function AccountPage() {
           <button
             onClick={handleSave}
             disabled={!isValid() || isSaving}
-            className="w-full bg-yori-accent text-yori-base rounded-2xl py-3.5 text-sm font-medium disabled:opacity-40 transition-opacity"
+            className="w-full bg-yori-accent text-yori-base rounded-2xl py-3.5 text-sm font-medium disabled:opacity-40 active:opacity-75 transition-opacity"
           >
             {isSaving ? '保存中…' : saveSuccess ? '保存しました' : '保存する'}
           </button>
@@ -305,7 +305,7 @@ export default function AccountPage() {
           </div>
           <button
             onClick={handleLogout}
-            className="w-full bg-yori-base border border-yori-light-border rounded-2xl py-3.5 text-sm text-yori-text"
+            className="w-full bg-yori-base border border-yori-light-border rounded-2xl py-3.5 text-sm text-yori-text active:opacity-75 transition-opacity"
           >
             ログアウト
           </button>
@@ -315,14 +315,21 @@ export default function AccountPage() {
         <section className="flex flex-col gap-0 bg-yori-base border border-yori-light-border rounded-2xl overflow-hidden">
           <Link
             href="/privacy"
-            className="px-4 py-3.5 text-sm text-yori-text flex justify-between items-center border-b border-yori-light-border"
+            className="px-4 py-3.5 text-sm text-yori-text flex justify-between items-center border-b border-yori-light-border active:opacity-75 transition-opacity"
           >
             プライバシーポリシー
             <span className="text-yori-muted text-xs">→</span>
           </Link>
+          <Link
+            href="/terms"
+            className="px-4 py-3.5 text-sm text-yori-text flex justify-between items-center border-b border-yori-light-border active:opacity-75 transition-opacity"
+          >
+            利用規約
+            <span className="text-yori-muted text-xs">→</span>
+          </Link>
           <a
-            href="mailto:tokumori.pudding@gmail.com"
-            className="px-4 py-3.5 text-sm text-yori-text flex justify-between items-center"
+            href="mailto:tokumori.ottie@gmail.com"
+            className="px-4 py-3.5 text-sm text-yori-text flex justify-between items-center active:opacity-75 transition-opacity"
           >
             お問い合わせ
             <span className="text-yori-muted text-xs">→</span>
@@ -334,7 +341,7 @@ export default function AccountPage() {
           {withdrawStep === 'idle' && (
             <button
               onClick={() => setWithdrawStep('confirm')}
-              className="w-full text-xs text-yori-muted py-3 rounded-2xl border border-yori-light-border bg-yori-base"
+              className="w-full text-xs text-yori-muted py-3 rounded-2xl border border-yori-light-border bg-yori-base active:opacity-75 transition-opacity"
             >
               退会する
             </button>
@@ -352,14 +359,14 @@ export default function AccountPage() {
                 <button
                   onClick={() => { setWithdrawStep('idle'); setWithdrawError('') }}
                   disabled={withdrawStep === 'deleting'}
-                  className="flex-1 py-2.5 rounded-xl text-xs text-yori-text bg-yori-card disabled:opacity-40"
+                  className="flex-1 py-2.5 rounded-xl text-xs text-yori-text bg-yori-card disabled:opacity-40 active:opacity-75 transition-opacity"
                 >
                   キャンセル
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={withdrawStep === 'deleting'}
-                  className="flex-1 py-2.5 rounded-xl text-xs text-red-500 border border-red-200 bg-red-50 disabled:opacity-40"
+                  className="flex-1 py-2.5 rounded-xl text-xs text-red-500 border border-red-200 bg-red-50 disabled:opacity-40 active:opacity-75 transition-opacity"
                 >
                   {withdrawStep === 'deleting' ? '削除中…' : '退会する'}
                 </button>

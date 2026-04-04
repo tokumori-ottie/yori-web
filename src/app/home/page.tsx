@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import WeeklySummaryCard from './WeeklySummaryCard'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -18,6 +19,9 @@ export default async function HomePage() {
     .single()
 
   if (!profile?.parent_type) redirect('/onboarding')
+
+  const isSundayJST =
+    new Date().toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Tokyo' }) === 'Sun'
 
   const { data: logs } = await supabase
     .from('daily_logs')
@@ -37,7 +41,7 @@ export default async function HomePage() {
       {/* ナビ */}
       <nav className="flex items-center justify-between px-5 pb-3 border-b border-yori-light-border">
         <span className="text-lg font-medium text-yori-accent-dark tracking-tight">Yori</span>
-        <Link href="/account" className="text-xs text-yori-muted">アカウント</Link>
+        <Link href="/account" className="text-xs text-yori-muted active:opacity-75 transition-opacity">アカウント</Link>
       </nav>
 
       <div className="flex-1 px-4 py-5 flex flex-col gap-4 overflow-y-auto">
@@ -70,6 +74,9 @@ export default async function HomePage() {
           話す
         </Link>
 
+        {/* 週次サマリー（日曜日のみ表示） */}
+        {isSundayJST && <WeeklySummaryCard />}
+
         {/* 最近の記録 */}
         {logs && logs.length > 0 ? (
           <div>
@@ -79,7 +86,7 @@ export default async function HomePage() {
                 <Link
                   key={log.id}
                   href={`/logs/${log.id}`}
-                  className="bg-yori-base border border-yori-light-border rounded-2xl px-3.5 py-3 flex gap-3 items-start"
+                  className="bg-yori-base border border-yori-light-border rounded-2xl px-3.5 py-3 flex gap-3 items-start active:opacity-75 transition-opacity"
                 >
                   <span className="text-xs text-yori-muted flex-shrink-0 pt-0.5">
                     {formatDate(log.date)}
@@ -110,7 +117,7 @@ export default async function HomePage() {
       </div>
 
       {/* タブバー */}
-      <div className="flex border-t border-yori-light-border bg-yori-base">
+      <div className="sticky bottom-0 flex border-t border-yori-light-border bg-yori-base">
         <div className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-accent">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path d="M3 10L10 3l7 7" stroke="#8B6F5E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -118,7 +125,7 @@ export default async function HomePage() {
           </svg>
           <span className="text-[10px]">ホーム</span>
         </div>
-        <Link href="/logs" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted">
+        <Link href="/logs" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75 transition-opacity">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path d="M4 6h12M4 10h8M4 14h6" stroke="#B5A89E" strokeWidth="1.5" strokeLinecap="round" />
           </svg>

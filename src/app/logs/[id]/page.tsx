@@ -126,20 +126,6 @@ export default async function LogDetailPage({
           </section>
         )}
 
-        {/* 相談への導線 */}
-        <div className="mt-auto pt-4">
-          <div className="bg-yori-card rounded-2xl px-4 py-4">
-            <p className="text-xs text-yori-text leading-relaxed mb-3">
-              この内容を持って、専門家に相談してみませんか。
-            </p>
-            <Link
-              href="/consult"
-              className="block w-full bg-yori-accent text-yori-base rounded-xl py-3 text-xs font-medium text-center"
-            >
-              相談先を探す
-            </Link>
-          </div>
-        </div>
 
       </div>
 

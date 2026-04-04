@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <div className="flex-1 px-5 py-6 flex flex-col gap-6 text-yori-text">
 
         <p className="text-xs text-yori-muted leading-relaxed">
-          最終更新日: 2025年7月1日
+          最終更新日: 2026年3月31日
         </p>
 
         <section className="flex flex-col gap-2">
@@ -51,7 +51,7 @@ export default function PrivacyPage() {
           </p>
           <ul className="text-xs leading-relaxed text-yori-muted flex flex-col gap-1.5 list-disc list-inside">
             <li>
-              <span className="text-yori-text">Google Gemini API</span>
+              <span className="text-yori-text">Anthropic Claude API</span>
               　— AI応答の生成のため、チャット内容が送信されます
             </li>
             <li>
@@ -96,7 +96,7 @@ export default function PrivacyPage() {
           <h2 className="text-sm font-medium">お問い合わせ</h2>
           <p className="text-xs leading-relaxed text-yori-muted">
             個人情報の取り扱いに関するご質問は、以下までご連絡ください。<br />
-            <span className="text-yori-accent">tokumori.pudding@gmail.com</span>
+            <span className="text-yori-accent">tokumori.ottie@gmail.com</span>
           </p>
         </section>
 

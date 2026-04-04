@@ -256,7 +256,7 @@ export default function ChatPage() {
           <div className="px-3.5 pt-2.5 flex flex-col gap-2">
             <div className="bg-yori-card rounded-xl px-3.5 py-2.5">
               <p className="text-xs text-yori-muted">今日の記録に保存しました</p>
-              <Link href="/logs" className="text-xs text-yori-accent mt-0.5 inline-block">
+              <Link href="/logs" className="text-xs text-yori-accent mt-0.5 inline-block active:opacity-75 transition-opacity">
                 記録を見る →
               </Link>
             </div>
@@ -284,7 +284,7 @@ export default function ChatPage() {
             <button
               onClick={endSession}
               disabled={isEnding}
-              className="w-full bg-yori-card text-yori-accent text-xs font-medium rounded-xl py-2.5 disabled:opacity-50 transition-opacity"
+              className="w-full bg-yori-card text-yori-accent text-xs font-medium rounded-xl py-2.5 disabled:opacity-50 active:opacity-75 transition-opacity"
             >
               {isEnding ? '保存中…' : '今日の話を終える'}
             </button>
@@ -296,18 +296,22 @@ export default function ChatPage() {
           <textarea
             ref={inputRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value)
+              e.target.style.height = 'auto'
+              e.target.style.height = `${e.target.scrollHeight}px`
+            }}
             onKeyDown={handleKeyDown}
             placeholder="話す…"
             rows={1}
             className="flex-1 bg-yori-card border-none rounded-2xl px-3.5 py-2.5 text-sm text-yori-text placeholder:text-yori-very-muted outline-none resize-none leading-relaxed"
-            style={{ maxHeight: '120px' }}
+            style={{ maxHeight: '160px', overflowY: 'auto' }}
             disabled={isLoading || logSaved}
           />
           <button
             onClick={sendMessage}
             disabled={!input.trim() || isLoading || !sessionId || logSaved}
-            className="w-9 h-9 rounded-full bg-yori-accent flex-shrink-0 flex items-center justify-center disabled:opacity-40 transition-opacity mb-0.5"
+            className="w-9 h-9 rounded-full bg-yori-accent flex-shrink-0 flex items-center justify-center disabled:opacity-40 active:opacity-75 transition-opacity mb-0.5"
             aria-label="送信"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>

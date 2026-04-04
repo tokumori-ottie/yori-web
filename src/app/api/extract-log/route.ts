@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         feelings: extracted.feelings,
         achievements: extracted.achievements ?? null,
         tags: extracted.tags,
+        mood_score: extracted.mood_score ?? 0,
       },
       { onConflict: 'session_id' }
     )
