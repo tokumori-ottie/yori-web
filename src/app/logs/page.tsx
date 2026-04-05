@@ -44,10 +44,14 @@ export default async function LogsPage() {
       <div className="sticky bottom-0 flex border-t border-yori-light-border bg-yori-base">
         <Link href="/home" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75 transition-opacity">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
-            <path d="M3 10L10 3l7 7" stroke="#B5A89E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <rect x="5" y="10" width="10" height="7" rx="1.5" stroke="#B5A89E" strokeWidth="1.5" />
+            <path
+              d="M4 4h12a1 1 0 011 1v7a1 1 0 01-1 1H7l-3.5 2.5V5a1 1 0 011-1z"
+              stroke="#B5A89E"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
           </svg>
-          <span className="text-[10px]">ホーム</span>
+          <span className="text-[10px]">チャット</span>
         </Link>
         <div className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-accent">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
