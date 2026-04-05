@@ -94,6 +94,15 @@ function MonthlySummarySection() {
         </div>
       )}
 
+      {/* 子どもの特性・困りごと */}
+      {content.child_difficulties && (
+        <div className="bg-yori-card rounded-xl p-3">
+          <p className="text-[11px] text-yori-accent-dark font-medium mb-1">相談のときのメモ</p>
+          <p className="text-[11px] text-yori-muted mb-1.5">子どもの特性・困りごと</p>
+          <p className="text-xs text-yori-text leading-relaxed">{content.child_difficulties}</p>
+        </div>
+      )}
+
       {/* よく出たタグ */}
       {content.top_tags.length > 0 && (
         <div>
@@ -196,6 +205,15 @@ function WeeklySummariesSection() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* 子どもの特性・困りごと */}
+            {content.child_difficulties && (
+              <div className="bg-yori-card rounded-xl p-3">
+                <p className="text-[11px] text-yori-accent-dark font-medium mb-1">相談のときのメモ</p>
+                <p className="text-[11px] text-yori-muted mb-1.5">子どもの特性・困りごと</p>
+                <p className="text-xs text-yori-text leading-relaxed">{content.child_difficulties}</p>
               </div>
             )}
 

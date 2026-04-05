@@ -9,6 +9,7 @@ export type ExtractedLog = {
   events: string
   feelings: string
   achievements: string | null
+  difficulties: string | null
   tags: string[]
   summary: string
   mood_score: number  // -2: とても辛い, -1: しんどい, 0: 普通, +1: 良かった, +2: 嬉しい・充実
@@ -29,6 +30,7 @@ ${conversationText}
   "events": "主な出来事を1文で簡潔に（事実ベース）",
   "feelings": "感じた気持ちを1文で簡潔に",
   "achievements": "子どもの成長・できたことがあれば1文で。なければ null",
+  "difficulties": "子どもの特性や困りごと（こだわり・感覚過敏・コミュニケーションの難しさ・癇癪・睡眠など）が話題に出ていれば1文で。なければ null",
   "tags": ["タグ1", "タグ2", "タグ3"],
   "summary": "ねぎらいと共感を2文以内で。温かく、簡潔に。",
   "mood_score": 0

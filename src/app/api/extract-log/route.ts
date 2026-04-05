@@ -38,6 +38,7 @@ export async function POST(request: Request) {
         events: extracted.events,
         feelings: extracted.feelings,
         achievements: extracted.achievements ?? null,
+        difficulties: extracted.difficulties ?? null,
         tags: extracted.tags,
         mood_score: extracted.mood_score ?? 0,
       },

@@ -2,10 +2,11 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { DailyLogForSummary } from './generate-weekly-summary'
 
 export type MonthlySummaryContent = {
-  summary: string         // 1ヶ月の感情の流れ・サマリー文
-  child_growth: string    // 子どもの成長まとめ
-  top_tags: string[]      // よく出たタグ上位5件
-  encouragement: string   // ねぎらいメッセージ
+  summary: string              // 1ヶ月の感情の流れ・サマリー文
+  child_growth: string         // 子どもの成長まとめ
+  child_difficulties: string   // 子どもの特性・困りごとまとめ（相談用）
+  top_tags: string[]           // よく出たタグ上位5件
+  encouragement: string        // ねぎらいメッセージ
 }
 
 function countTags(logs: DailyLogForSummary[]): string[] {
@@ -35,6 +36,7 @@ export async function generateMonthlySummary(
 - 出来事: ${log.events ?? 'なし'}
 - 気持ち: ${log.feelings ?? 'なし'}
 - できたこと: ${log.achievements ?? 'なし'}
+- 困りごと: ${log.difficulties ?? 'なし'}
 - タグ: ${log.tags.length > 0 ? log.tags.map((t) => `#${t}`).join(' ') : 'なし'}`
     })
     .join('\n\n')
@@ -54,6 +56,7 @@ ${logsText}
 {
   "summary": "1ヶ月全体の感情の流れをやさしくまとめる。月の前半・後半の変化にも触れる。120〜180字。",
   "child_growth": "お子さんの成長・できたことを中心に、具体的にまとめる。100〜150字。記録がない場合は空文字。",
+  "child_difficulties": "この1ヶ月に繰り返し出てきた子どもの特性・困りごとをまとめる（こだわり、感覚過敏、癇癪、睡眠、言葉・コミュニケーション、切り替えの難しさなど）。医療・療育機関や先生に伝えやすい表現で、具体的に150〜200字。記録がない場合は空文字。",
   "encouragement": "1ヶ月間のねぎらいメッセージ。自然で過剰でない。1〜2文。"
 }
 
