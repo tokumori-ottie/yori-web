@@ -28,6 +28,11 @@ type RecentLog = {
   tags: string[]
 }
 
+function buildFirstTimeGreeting(parentType: string | null): string {
+  const role = parentType === 'mama' ? 'ママ' : parentType === 'papa' ? 'パパ' : 'あなた'
+  return `はじめまして。私はYoriです。${role}のそばで話を聞かせてもらえたら嬉しいです。今日はどんな一日でしたか？`
+}
+
 async function generateGreeting(recentLogs: RecentLog[], today: string): Promise<string> {
   if (recentLogs.length === 0) return '今日はどんな一日でしたか？'
 
@@ -154,11 +159,14 @@ export default async function HomePage() {
     ])
 
   const hasEndedToday = !!(todayEndedSessions && todayEndedSessions.length > 0)
+  const isFirstTime = !recentLogs || recentLogs.length === 0
 
-  // 今日すでに話していた場合は固定文、それ以外はログ内容からClaudeが生成
+  // 優先順: 今日すでに話した → 固定文 / 初回 → 自己紹介 / それ以外 → Claudeが生成
   const greeting = hasEndedToday
     ? 'また話しかけてくれたんだね。続きを聞かせて。'
-    : await generateGreeting((recentLogs ?? []) as RecentLog[], today)
+    : isFirstTime
+      ? buildFirstTimeGreeting(profile.parent_type)
+      : await generateGreeting((recentLogs ?? []) as RecentLog[], today)
 
   const weekMoodChart = buildWeekMoodChart(weekLogs ?? [], weekStart, today)
   const hasWeekData = weekMoodChart.some((e) => e.score !== null)
