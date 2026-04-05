@@ -43,7 +43,7 @@ export async function GET() {
 
   const { data: logs } = await supabase
     .from('daily_logs')
-    .select('date, events, feelings, achievements, tags, mood_score')
+    .select('date, events, feelings, achievements, difficulties, tags, mood_score')
     .eq('user_id', user.id)
     .gte('date', monthStart)
     .lte('date', monthEnd)

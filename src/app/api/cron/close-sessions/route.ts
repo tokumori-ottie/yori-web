@@ -70,6 +70,7 @@ export async function GET(request: Request) {
           events: extracted.events,
           feelings: extracted.feelings,
           achievements: extracted.achievements ?? null,
+          difficulties: extracted.difficulties ?? null,
           tags: extracted.tags,
         },
         { onConflict: 'session_id' }

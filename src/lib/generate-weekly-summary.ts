@@ -5,6 +5,7 @@ export type DailyLogForSummary = {
   events: string | null
   feelings: string | null
   achievements: string | null
+  difficulties: string | null
   tags: string[]
   mood_score: number | null
 }
@@ -20,6 +21,7 @@ export type WeeklySummaryContent = {
   emotion_summary: string
   notable_events: { date: string; content: string }[]
   achievements: string[]
+  child_difficulties: string | null
   insight: string | null
   encouragement: string
 }
@@ -48,6 +50,7 @@ export async function generateWeeklySummary(
 - 出来事: ${log.events ?? 'なし'}
 - 気持ち: ${log.feelings ?? 'なし'}
 - できたこと: ${log.achievements ?? 'なし'}
+- 困りごと: ${log.difficulties ?? 'なし'}
 - タグ: ${log.tags.length > 0 ? log.tags.map((t) => `#${t}`).join(' ') : 'なし'}`
     })
     .join('\n\n')
@@ -74,6 +77,7 @@ ${
     {"date": "M/D", "content": "感情の起伏が大きかった、またはお子さんの変化が見られた出来事。80字以内。"}
   ],
   "achievements": ["具体的なできたこと・成長を1つずつ。80字以内。"],
+  "child_difficulties": "この週に出てきた子どもの特性や困りごとのパターンを100〜150字でまとめる（例：こだわり、感覚過敏、癇癪、睡眠、コミュニケーション、切り替えの難しさなど）。具体的で、医療・療育機関に伝えやすい表現で。記録がなければ null。",
   "insight": "この週のパターンや傾向を1つだけ。80〜100字。押しつけがましくなく。",
   "encouragement": "自然で過剰でないねぎらい。1〜2文。"
 }`
@@ -81,6 +85,7 @@ ${
   "emotion_summary": "全体の感情傾向を80字以内でやさしくまとめる。",
   "notable_events": [],
   "achievements": [],
+  "child_difficulties": null,
   "insight": null,
   "encouragement": "自然で過剰でないねぎらい。1〜2文。"
 }`
