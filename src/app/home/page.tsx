@@ -61,10 +61,19 @@ async function generateGreeting(recentLogs: RecentLog[], today: string): Promise
     })
     .join('\n\n')
 
+  const hardDays = recentLogs.filter((l) => l.mood_score !== null && l.mood_score <= -1)
+  const hardDayNote =
+    hardDays.length > 0
+      ? `\n※ 重要：直近の記録に「${hardDays.map((l) => {
+          const d = new Date(l.date + 'T00:00:00')
+          return `${d.getMonth() + 1}/${d.getDate()}（${l.mood_score === -2 ? 'とても辛い' : 'しんどい'}）`
+        }).join('・')}」の日があります。必ずその日のしんどさや出来事に触れ、気にかけてください。`
+      : ''
+
   const gapNote = daysDiff >= 3 ? `\n※ 最後の記録から${daysDiff}日経っています。` : ''
 
   const prompt = `あなたは、障害のある子どもを育てる親のそばにいるAIコンパニオン「Yori」です。
-今日アプリを開いた親に、最初のひとことを届けます。${gapNote}
+今日アプリを開いた親に、最初のひとことを届けます。${gapNote}${hardDayNote}
 
 以下は最近の記録です：
 ${logsText}
@@ -73,7 +82,8 @@ ${logsText}
 
 ## 条件
 - 記録にある具体的な出来事・気持ち・困りごとに触れ、「その後どうだった？」「大丈夫だった？」という問いかけや確認をする
-- しんどそうな日が続いていたら心配する、良いことがあったなら続きを聞きたがる
+- しんどそうな日（mood_scoreが「しんどい」「とても辛い」）があれば、**必ず**その日のしんどさや出来事に触れて気にかける
+- 良いことがあったなら続きを聞きたがる
 - 自然なため口（「〜だったね」「どうだった？」）
 - 押しつけがましくない、さりげない1〜2文のみ
 - 説明や前置き不要。メッセージ本文だけ返す`
