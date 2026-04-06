@@ -116,7 +116,8 @@ export async function POST(request: Request) {
         const orderLabel = childrenData.length > 1
           ? (i === 0 ? '長男・長女' : i === 1 ? '次男・次女' : `${i + 1}番目の子`)
           : null
-        const nameLabel = c.nickname ? c.nickname : `${age}歳の${genderLabel}`
+        const honorific = c.gender === 'boy' ? 'くん' : c.gender === 'girl' ? 'ちゃん' : 'さん'
+        const nameLabel = c.nickname ? `${c.nickname}${honorific}` : `${age}歳の${genderLabel}`
         return orderLabel ? `${nameLabel}（${age}歳・${genderLabel}・${orderLabel}）` : `${nameLabel}（${age}歳・${genderLabel}）`
       }).join('、')
     : null

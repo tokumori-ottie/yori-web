@@ -33,7 +33,7 @@ export default function AccountPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
-  const [withdrawStep, setWithdrawStep] = useState<'idle' | 'confirm' | 'deleting'>('idle')
+  const [withdrawStep, setWithdrawStep] = useState<'idle' | 'confirm' | 'deleting' | 'done'>('idle')
   const [withdrawError, setWithdrawError] = useState('')
 
   useEffect(() => {
@@ -130,7 +130,7 @@ export default function AccountPage() {
       if (!res.ok) throw new Error('delete failed')
       const supabase = createClient()
       await supabase.auth.signOut()
-      router.push('/')
+      setWithdrawStep('done')
     } catch {
       setWithdrawError('削除に失敗しました。もう一度お試しください。')
       setWithdrawStep('confirm')
@@ -345,6 +345,26 @@ export default function AccountPage() {
             >
               退会する
             </button>
+          )}
+          {withdrawStep === 'done' && (
+            <div className="bg-yori-base border border-yori-light-border rounded-2xl px-4 py-6 flex flex-col gap-4 text-center">
+              <div className="w-10 h-10 rounded-full bg-yori-avatar flex items-center justify-center text-sm text-yori-base font-medium mx-auto">
+                よ
+              </div>
+              <div>
+                <p className="text-sm font-medium text-yori-text mb-1.5">退会が完了しました</p>
+                <p className="text-xs text-yori-muted leading-relaxed">
+                  ご利用いただきありがとうございました。<br />
+                  またいつでも話しかけてください。
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/')}
+                className="w-full bg-yori-accent text-yori-base rounded-xl py-2.5 text-xs font-medium active:opacity-75 transition-opacity"
+              >
+                トップページへ
+              </button>
+            </div>
           )}
           {(withdrawStep === 'confirm' || withdrawStep === 'deleting') && (
             <div className="bg-yori-base border border-yori-light-border rounded-2xl px-4 py-5 flex flex-col gap-4">
