@@ -89,7 +89,7 @@ export default function OnboardingPage() {
         .insert(childrenToInsert)
       if (childrenError) throw childrenError
 
-      router.push('/home')
+      router.push('/welcome')
     } catch (err) {
       console.error(err)
       setError('保存に失敗しました。もう一度お試しください。')

@@ -47,6 +47,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
   const [logSaved, setLogSaved] = useState(false)
   const [isEnding, setIsEnding] = useState(false)
   const [endError, setEndError] = useState(false)
+  const [showFirstHint, setShowFirstHint] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -199,6 +200,12 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
         .update({ ended_at: new Date().toISOString() })
         .eq('id', sessionId)
 
+      // 初回セッション終了ヒントの判定（localStorageで管理）
+      if (!localStorage.getItem('yori_session_completed')) {
+        localStorage.setItem('yori_session_completed', '1')
+        setShowFirstHint(true)
+      }
+
       setLogSaved(true)
 
       if (data.summary) {
@@ -288,9 +295,14 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
           <div className="px-3.5 pt-2.5 flex flex-col gap-2">
             <div className="bg-yori-card rounded-xl px-3.5 py-2.5">
               <p className="text-xs text-yori-muted">今日の記録に保存しました</p>
+              {showFirstHint && (
+                <p className="text-xs text-yori-muted mt-1.5 leading-relaxed">
+                  話した内容は「記録」に残り、毎週・毎月まとめてレポートになります。
+                </p>
+              )}
               <Link
                 href="/logs"
-                className="text-xs text-yori-accent mt-0.5 inline-block active:opacity-75 transition-opacity"
+                className="text-xs text-yori-accent mt-1 inline-block active:opacity-75 transition-opacity"
               >
                 記録を見る →
               </Link>

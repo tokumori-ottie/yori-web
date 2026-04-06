@@ -16,10 +16,12 @@
 src/
   app/
     page.tsx              # ログインページ（Googleログインボタン）
-    onboarding/page.tsx   # 初回オンボーディング（パパ/ママ・子ども情報入力）
-    home/page.tsx         # ホーム（挨拶カード・話すボタン・レポートバナー）
-    home/WeeklySummaryCard.tsx  # 週次サマリーカード（レポートページに移動済み・未使用）
-    chat/page.tsx         # チャットUI（ストリーミング対応、セッション管理）
+    onboarding/page.tsx   # 初回オンボーディング（パパ/ママ・子ども情報入力）→ /welcome へ
+    welcome/page.tsx      # 初回ウェルカム画面（Yori自己紹介・1画面）→ /home へ
+    home/page.tsx         # チャット画面（サーバーコンポーネント：認証・文脈取得・挨拶生成）
+    home/ChatClient.tsx   # チャットUI（クライアント：SSEストリーミング・セッション管理）
+    home/WeeklySummaryCard.tsx  # 週次サマリーカード（未使用）
+    chat/page.tsx         # /home へのリダイレクト（後方互換）
     logs/page.tsx         # 記録一覧（カレンダー＋リスト形式）
     reports/page.tsx      # レポート（月次サマリー＋週次サマリー・クライアント）
     logs/LogsCalendar.tsx # カレンダーUIコンポーネント（クライアント）
@@ -30,7 +32,7 @@ src/
     auth/callback/        # Supabase OAuth コールバック
     api/
       chat/route.ts           # Claude SSEストリーミング、メッセージDB保存、プロフィール注入、Web検索（2フェーズ）
-      extract-log/route.ts    # 会話からログ抽出（events/feelings/achievements/tags/summary/mood_score）
+      extract-log/route.ts    # 会話からログ抽出（events/feelings/achievements/difficulties/tags/summary/mood_score）
       weekly-summary/route.ts # 週次サマリー生成（オンデマンド＋キャッシュ）
       monthly-summary/route.ts # 月次サマリー生成（オンデマンド＋キャッシュ）
       cron/close-sessions/    # 日付をまたいだ未終了セッションを自動クローズ（Vercel Cron）
@@ -54,6 +56,7 @@ supabase/
     005_daily_logs_mood_score.sql
     006_weekly_summaries.sql
     007_monthly_summaries.sql
+    008_daily_logs_difficulties.sql   # ← 追加
 vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
 ```
 
@@ -70,13 +73,14 @@ vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
 - `daily_logs` - セッションごとの記録（`session_id` でユニーク）
   - `session_id`: 1セッション = 1レコード（同日複数可）
   - `events`, `feelings`, `achievements`（成長・できたこと）, `tags`
+  - `difficulties`: 子どもの特性・困りごと（感覚過敏・癇癪・睡眠・コミュニケーションなど。extract-logで自動抽出）
   - `mood_score`: 会話全体の感情スコア（-2〜+2の整数。extract-logで自動付与）
 - `weekly_summaries` - 週次サマリーキャッシュ（`user_id + week_start` でユニーク）
   - `week_start`: その週の月曜日（date型）
-  - `content`: サマリー内容（jsonb。mood_chart・emotion_summary・notable_events・achievements・insight・encouragement）
+  - `content`: サマリー内容（jsonb。mood_chart・emotion_summary・notable_events・achievements・child_difficulties・insight・encouragement）
 - `monthly_summaries` - 月次サマリーキャッシュ（`user_id + month_start` でユニーク）
   - `month_start`: その月の1日（date型、YYYY-MM-01）
-  - `content`: サマリー内容（jsonb。summary・child_growth・top_tags・encouragement）
+  - `content`: サマリー内容（jsonb。summary・child_growth・child_difficulties・top_tags・encouragement）
 
 ## セッション管理のしくみ
 
@@ -86,9 +90,42 @@ vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
 - 記録詳細（`/logs/[id]`）からそのセッションのチャット履歴を参照できる
 - **自動クローズ（Vercel Cron）**: 毎日0時JST（UTC 15:00）に前日以前の未終了セッションを自動処理。ユーザーが一度も話していないセッションはログ保存せずに終了マークのみ付与
 
+## チャット画面（`/home`）
+
+`/home` がメインのチャット画面。サーバーコンポーネント（`page.tsx`）とクライアントコンポーネント（`ChatClient.tsx`）に分離。
+
+### サーバーコンポーネント（`page.tsx`）の役割
+
+1. 認証・オンボーディングチェック
+2. 直近3件の `daily_logs` を取得し、Claudeで**パーソナライズされた挨拶文**を生成
+3. 今週のmood_scoreを取得し、チャート用データを構築
+4. `userId`・`initialGreeting`・`weekMoodChart` をクライアントに渡す
+
+### 挨拶文の生成ロジック（優先順）
+
+| 条件 | 挨拶 |
+|------|------|
+| 今日すでに話を終えた | `また話しかけてくれたんだね。続きを聞かせて。`（固定） |
+| ログ0件（初回ユーザー） | `はじめまして。私はYoriです。ママ/パパのそばで…`（固定） |
+| 7日以上ログ空白 | `久しぶり。最近どうしてた？`（固定） |
+| それ以外 | 直近3件のlogs（events/feelings/achievements/difficulties/tags/mood_score）をClaudeに渡して生成 |
+
+- Claudeが生成する挨拶は具体的な出来事・気持ち・困りごとに触れた1〜2文
+- API失敗時は `今日はどんな一日でしたか？` にフォールバック
+
+### 今週のムードチャート
+
+- チャット画面上部に今週（月〜本日）のmood_scoreドットをさりげなく表示
+- ログがある週のみ表示。タップで `/reports` へ遷移
+- 既存の `moodDotStyle` 配色（赤・グレー・青）を使用
+
+### タブバー
+
+「チャット / 記録 / レポート」の3タブ（旧：ホーム / 記録 / レポート）。全タブページで共通。
+
 ## レポートページ（`/reports`）
 
-3タブ構成（ホーム / 記録 / レポート）のうちのレポートタブ。クライアントコンポーネントで各APIを叩き、オンデマンドで生成・表示する。
+3タブ構成（チャット / 記録 / レポート）のうちのレポートタブ。クライアントコンポーネントで各APIを叩き、オンデマンドで生成・表示する。
 
 - **月次まとめ**: `/api/monthly-summary` を呼び出し、前月のサマリーを表示
 - **週次まとめ**: `/api/weekly-summary` を呼び出し、当週のサマリーを表示
@@ -102,9 +139,10 @@ vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
   - `emotion_summary`: 週全体の感情傾向（変化の流れも含む）
   - `notable_events`: 印象的だった出来事（2〜3件）
   - `achievements`: 子どもの成長・できたこと（2〜3件）
+  - `child_difficulties`: この週の子どもの特性・困りごとパターン（医療・療育機関に伝えやすい表現）
   - `insight`: 週のパターン・傾向（1つだけ）
   - `encouragement`: ねぎらい
-- ログが2件以下の週は `emotion_summary` と `encouragement` のみ出力
+- ログが2件以下の週は `emotion_summary` と `encouragement` のみ出力（`child_difficulties` は null）
 
 ### 月次サマリーのしくみ
 
@@ -113,13 +151,51 @@ vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
 - サマリーの内容:
   - `summary`: 1ヶ月の感情の流れ・振り返りサマリー
   - `child_growth`: 子どもの成長・できたことまとめ
+  - `child_difficulties`: 1ヶ月間の特性・困りごとまとめ（医療・療育機関や先生への申し送りに使える表現）
   - `top_tags`: よく出たタグ上位5件（タグ頻度集計、Claude不要）
   - `encouragement`: ねぎらいメッセージ
 
-### ホームのバナー表示
+### レポート画面の「相談のときのメモ」
 
-- Supabaseで `weekly_summaries` / `monthly_summaries` のキャッシュ有無を確認（APIコール不要）
-- キャッシュがあれば「先月のまとめができています」または「今週のまとめができています」バナーを表示 → /reports へ誘導
+週次・月次の両方に `child_difficulties` がある場合、「相談のときのメモ」カードとして表示。医師・療育士・学校の先生への相談時の参考情報として使える。
+
+## オンボーディング・初回体験フロー
+
+```
+ログイン → /onboarding（パパ/ママ・子ども情報）→ /welcome（自己紹介）→ /home（チャット）
+```
+
+初回ログイン後、`profiles.parent_type` が未設定なら `/onboarding` へリダイレクト。
+
+### `/onboarding`
+1. パパ / ママ を選択
+2. 子どもカードを入力（ニックネーム任意・生年月日・性別）
+3. 「＋もう一人追加」で複数対応
+4. 「はじめる」→ `/welcome` へ
+
+### `/welcome`（初回のみ）
+- Yoriの自己紹介を1画面で表示（スライドなし・1ボタン）
+- サーバー側で `daily_logs` の件数を確認。すでにログがある場合は `/home` へリダイレクト（再訪時に見えない）
+- 「話してみる」→ `/home` へ
+
+### 初回チャットの挨拶
+- ログ0件のユーザーには固定の自己紹介メッセージを表示（Claude不要）
+- `profile.parent_type` を参照してママ/パパを切り替え
+
+### 初回セッション終了ヒント
+- 初めて「今日の話を終える」を押したとき、保存通知に1行追加：
+  「話した内容は「記録」に残り、毎週・毎月まとめてレポートになります。」
+- `localStorage` の `yori_session_completed` フラグで管理。2回目以降は表示しない
+
+プロフィール情報は `/account` から後から編集可能。
+
+## アカウントページ（`/account`）
+
+- パパ/ママの切替・子ども情報（ニックネーム・生年月日・性別）を編集できる
+- 子どもの更新は全削除→再挿入方式
+- ログアウトボタン
+- 利用規約・プライバシーポリシー・お問い合わせへのリンク
+- 退会（2ステップ確認 → service roleで全データ削除）
 
 ## Yoriのシステムプロンプト構成
 
@@ -151,25 +227,6 @@ Yoriの設計方針:
 - 子どもの小さな成長・「できた」を一緒に喜ぶ
 - 質問は2〜3ターンに1回程度。受け止めて終わる返しを大切にする
 
-## オンボーディングフロー
-
-初回ログイン後、`profiles.parent_type` が未設定なら `/onboarding` へリダイレクト。
-
-1. パパ / ママ を選択
-2. 子どもカードを入力（ニックネーム任意・生年月日・性別）
-3. 「＋もう一人追加」で複数対応
-4. 「はじめる」→ `/home` へ
-
-プロフィール情報は `/account` から後から編集可能。
-
-## アカウントページ（`/account`）
-
-- パパ/ママの切替・子ども情報（ニックネーム・生年月日・性別）を編集できる
-- 子どもの更新は全削除→再挿入方式
-- ログアウトボタン
-- 利用規約・プライバシーポリシー・お問い合わせへのリンク
-- 退会（2ステップ確認 → service roleで全データ削除）
-
 ## 環境変数（.env.local / Vercel）
 
 ```
@@ -187,14 +244,17 @@ TAVILY_API_KEY=
 - `yori-base`: #FAF8F5（カードベース）
 - `yori-card`: #EDE5DC（カード）
 - `yori-accent`: #8B6F5E（アクセント・ブラウン）
-- `yori-accent-dark`: #6B4F3F
-- `yori-text`: #3D2B1F（本文）
-- `yori-muted`: #9C8276
-- `yori-avatar`: #C4A882（achievementsなど温かみのある表示に使用）
+- `yori-accent-dark`: #5C4F46
+- `yori-text`: #4A3D36（本文）
+- `yori-muted`: #9A8880
+- `yori-very-muted`: #B5A89E
+- `yori-border`: #D4C5BC
+- `yori-light-border`: #E8E2DA
+- `yori-avatar`: #C9B8AC（温かみのある表示に使用）
 
 ## ムードスコアの配色
 
-mood_score（-2〜+2）はカレンダーと週次サマリーで共通の色を使用:
+mood_score（-2〜+2）はカレンダー・週次サマリー・チャット上部チャートで共通の色を使用:
 
 | スコア | 意味 | 色 |
 |--------|------|-----|
@@ -213,6 +273,7 @@ mood_score（-2〜+2）はカレンダーと週次サマリーで共通の色を
 - Vercel Cron は `Authorization: Bearer {CRON_SECRET}` ヘッダーで認証する
 - ログ抽出（`lib/extract-log.ts`）は `max_tokens: 2048`。JSONをregexで抽出 (`\{[\s\S]*\}`)
 - 週次サマリー生成（`lib/generate-weekly-summary.ts`）も同様の構造。ログが2件以下の場合はフォールバック出力
+- `home/page.tsx` の挨拶生成は `max_tokens: 120`（1〜2文の短い出力）
 - お問い合わせ先: tokumori.ottie@gmail.com
 
 ## Web検索のしくみ（`lib/web-search.ts` + `api/chat/route.ts`）
