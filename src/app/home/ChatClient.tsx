@@ -119,6 +119,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
     if (!text || !sessionId || isLoading) return
 
     setInput('')
+    if (inputRef.current) inputRef.current.style.height = 'auto'
     setIsLoading(true)
 
     const userMsg: Message = {
