@@ -5,7 +5,7 @@ export default function TermsPage() {
     <main className="min-h-screen bg-yori-bg flex flex-col max-w-sm mx-auto">
 
       <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-yori-light-border bg-yori-base">
-        <Link href="/home" className="text-xs text-yori-muted active:opacity-75 transition-opacity">← 戻る</Link>
+        <Link href="/home" className="text-xs text-yori-muted active:opacity-75">← 戻る</Link>
         <span className="text-sm font-medium text-yori-accent-dark">利用規約</span>
         <span className="w-10" />
       </div>

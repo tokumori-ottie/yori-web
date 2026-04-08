@@ -35,7 +35,7 @@ export default function LoginPage() {
         <div className="w-full flex flex-col gap-3">
           <button
             onClick={handleGoogleLogin}
-            className="w-full bg-yori-base border border-yori-border rounded-2xl py-4 px-5 flex items-center justify-center gap-3 text-yori-text text-sm font-medium shadow-sm active:opacity-80 transition-opacity"
+            className="w-full bg-yori-base border border-yori-border rounded-2xl py-4 px-5 flex items-center justify-center gap-3 text-yori-text text-sm font-medium shadow-sm active:opacity-80"
           >
             <GoogleIcon />
             Googleでログイン
