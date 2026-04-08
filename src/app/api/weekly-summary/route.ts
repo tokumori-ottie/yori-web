@@ -10,14 +10,15 @@ function getWeekStartJST(): string {
   return jstDate.toLocaleDateString('sv-SE')
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return new Response('Unauthorized', { status: 401 })
 
-  const weekStart = getWeekStartJST()
+  const { searchParams } = new URL(request.url)
+  const weekStart = searchParams.get('week_start') ?? getWeekStartJST()
 
   // キャッシュ確認
   const { data: cached } = await supabase

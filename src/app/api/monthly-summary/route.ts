@@ -17,14 +17,15 @@ export type MonthlyResponse = {
   monthStart: string
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return new Response('Unauthorized', { status: 401 })
 
-  const monthStart = getPrevMonthStartJST()
+  const { searchParams } = new URL(request.url)
+  const monthStart = searchParams.get('month_start') ?? getPrevMonthStartJST()
 
   // キャッシュ確認
   const { data: cached } = await supabase
