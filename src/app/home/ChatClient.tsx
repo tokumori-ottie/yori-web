@@ -47,6 +47,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
   const [logSaved, setLogSaved] = useState(false)
   const [isEnding, setIsEnding] = useState(false)
   const [endError, setEndError] = useState(false)
+  const [confirmEnd, setConfirmEnd] = useState(false)
   const [showFirstHint, setShowFirstHint] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -329,13 +330,33 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
         {/* 終了ボタン */}
         {hasConversation && !logSaved && (
           <div className="px-3.5 pt-2.5">
-            <button
-              onClick={endSession}
-              disabled={isEnding}
-              className="w-full bg-yori-card text-yori-accent text-xs font-medium rounded-xl py-2.5 disabled:opacity-50 active:opacity-75"
-            >
-              {isEnding ? '保存中…' : '今日の話を終える'}
-            </button>
+            {confirmEnd ? (
+              <div className="flex flex-col gap-1.5">
+                <p className="text-[11px] text-yori-muted text-center">今日の記録を保存して終わりますか？</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConfirmEnd(false)}
+                    className="flex-1 bg-yori-base border border-yori-light-border text-yori-muted text-xs font-medium rounded-xl py-2.5 active:opacity-75"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    onClick={() => { setConfirmEnd(false); endSession() }}
+                    disabled={isEnding}
+                    className="flex-1 bg-yori-card text-yori-accent text-xs font-medium rounded-xl py-2.5 disabled:opacity-50 active:opacity-75"
+                  >
+                    {isEnding ? '保存中…' : '終える'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmEnd(true)}
+                className="w-full bg-yori-card text-yori-accent text-xs font-medium rounded-xl py-2.5 active:opacity-75"
+              >
+                今日の話を終える
+              </button>
+            )}
           </div>
         )}
 
