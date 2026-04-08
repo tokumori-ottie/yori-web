@@ -170,12 +170,14 @@ NO_SEARCH`,
 
   // フェーズ2: 必要なら検索してsystem promptに注入
   let systemFinal = systemPrompt
+  let searchSources: { title: string; url: string }[] = []
   if (intentText.startsWith('SEARCH:')) {
     const query = intentText.replace('SEARCH:', '').trim()
     console.log('[search] query:', query)
     const results = await searchWeb(query)
     console.log('[search] results count:', results.length)
     if (results.length > 0) {
+      searchSources = results.map((r) => ({ title: r.title, url: r.url }))
       const context = results
         .map((r) => `・${r.title}\n${r.content.slice(0, 200)}`)
         .join('\n\n')
@@ -217,6 +219,13 @@ NO_SEARCH`,
           role: 'assistant',
           content: fullText,
         })
+      }
+
+      // 検索ソースがある場合はマーカー付きで末尾に送信
+      if (searchSources.length > 0) {
+        controller.enqueue(
+          new TextEncoder().encode(`\n__REFS__:${JSON.stringify(searchSources)}`)
+        )
       }
 
       controller.close()
