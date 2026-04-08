@@ -413,6 +413,13 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
   )
 }
 
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/^#+\s+/gm, '')
+}
+
 function MessageRow({ message }: { message: Message }) {
   const isUser = message.role === 'user'
 
@@ -438,7 +445,7 @@ function MessageRow({ message }: { message: Message }) {
       </div>
       <div className="max-w-[220px]">
         <div className="bg-yori-base border border-yori-light-border rounded-tr-2xl rounded-br-2xl rounded-bl-2xl px-3 py-2.5 text-sm text-yori-text leading-relaxed whitespace-pre-wrap">
-          {message.content ? message.content : <LoadingDots />}
+          {message.content ? stripMarkdown(message.content) : <LoadingDots />}
         </div>
       </div>
     </div>
