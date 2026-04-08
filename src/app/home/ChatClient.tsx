@@ -4,10 +4,16 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
+type Source = {
+  title: string
+  url: string
+}
+
 type Message = {
   id: string
   role: 'user' | 'assistant'
   content: string
+  sources?: Source[]
 }
 
 export type WeekMoodEntry = {
@@ -158,9 +164,27 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
         const { done, value } = await reader.read()
         if (done) break
         aiContent += decoder.decode(value, { stream: true })
-        setMessages((prev) =>
-          prev.map((m) => (m.id === aiPlaceholderId ? { ...m, content: aiContent } : m))
-        )
+
+        const refsIdx = aiContent.indexOf('\n__REFS__:')
+        if (refsIdx !== -1) {
+          const displayContent = aiContent.slice(0, refsIdx)
+          try {
+            const sources: Source[] = JSON.parse(aiContent.slice(refsIdx + '\n__REFS__:'.length))
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === aiPlaceholderId ? { ...m, content: displayContent, sources } : m
+              )
+            )
+          } catch {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === aiPlaceholderId ? { ...m, content: displayContent } : m))
+            )
+          }
+        } else {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === aiPlaceholderId ? { ...m, content: aiContent } : m))
+          )
+        }
       }
     } catch (err) {
       console.error(err)
@@ -468,6 +492,22 @@ function MessageRow({ message }: { message: Message }) {
         <div className="bg-yori-base border border-yori-light-border rounded-tr-2xl rounded-br-2xl rounded-bl-2xl px-3 py-2.5 text-sm text-yori-text leading-relaxed whitespace-pre-wrap">
           {message.content ? stripMarkdown(message.content) : <LoadingDots />}
         </div>
+        {message.sources && message.sources.length > 0 && (
+          <div className="mt-1.5 flex flex-col gap-1">
+            <p className="text-[10px] text-yori-very-muted px-1">参考サイト</p>
+            {message.sources.map((s, i) => (
+              <a
+                key={i}
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-yori-accent underline leading-snug px-1 break-all active:opacity-75"
+              >
+                {s.title}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
