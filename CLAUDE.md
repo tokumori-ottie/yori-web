@@ -31,10 +31,11 @@ src/
     terms/page.tsx        # 利用規約
     auth/callback/        # Supabase OAuth コールバック
     api/
-      chat/route.ts           # Claude SSEストリーミング、メッセージDB保存、プロフィール注入、Web検索（2フェーズ）
+      chat/route.ts           # Claude SSEストリーミング、メッセージDB保存、プロフィール注入、Web検索（2フェーズ）、ソースリンク送信
       extract-log/route.ts    # 会話からログ抽出（events/feelings/achievements/difficulties/tags/summary/mood_score）
-      weekly-summary/route.ts # 週次サマリー生成（オンデマンド＋キャッシュ）
-      monthly-summary/route.ts # 月次サマリー生成（オンデマンド＋キャッシュ）
+      weekly-summary/route.ts # 週次サマリー生成（オンデマンド＋キャッシュ）?week_start=対応
+      monthly-summary/route.ts # 月次サマリー生成（オンデマンド＋キャッシュ）?month_start=対応
+      past-summaries/route.ts # 過去のサマリー一覧（week_start / month_start の配列を返す）
       cron/close-sessions/    # 日付をまたいだ未終了セッションを自動クローズ（Vercel Cron）
       delete-account/         # アカウント削除（service roleで全データ削除）
   lib/
@@ -85,7 +86,7 @@ vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
 ## セッション管理のしくみ
 
 - チャット開始時: `ended_at IS NULL` の当日セッションを取得、なければ新規作成
-- 「今日の話を終える」: extract-log → `ended_at` を更新 → ねぎらいメッセージ表示
+- 「今日の話を終える」: **2段階確認**（タップ→確認行に切替→「終える」で実行）→ extract-log → `ended_at` を更新 → ねぎらいメッセージ表示
 - 「また話す」: 新しいセッションを作成して画面リセット（同日複数セッション可）
 - 記録詳細（`/logs/[id]`）からそのセッションのチャット履歴を参照できる
 - **自動クローズ（Vercel Cron）**: 毎日0時JST（UTC 15:00）に前日以前の未終了セッションを自動処理。ユーザーが一度も話していないセッションはログ保存せずに終了マークのみ付与
@@ -129,6 +130,7 @@ vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
 
 - **月次まとめ**: `/api/monthly-summary` を呼び出し、前月のサマリーを表示
 - **週次まとめ**: `/api/weekly-summary` を呼び出し、当週のサマリーを表示
+- **過去のまとめ**: 各セクションの下に「過去のまとめ」ボタンを配置。タップで `/api/past-summaries` から一覧を取得し、各エントリをインライン展開できる
 
 ### 週次サマリーのしくみ
 
@@ -157,7 +159,13 @@ vercel.json               # Vercel Cron設定（0 15 * * * = 00:00 JST）
 
 ### レポート画面の「相談のときのメモ」
 
-週次・月次の両方に `child_difficulties` がある場合、「相談のときのメモ」カードとして表示。医師・療育士・学校の先生への相談時の参考情報として使える。
+週次・月次の `child_difficulties` がある場合、「相談のときのメモ」カードとして表示。医師・療育士・学校の先生への相談時の参考情報として使える。
+
+### 過去サマリーのしくみ
+
+- `/api/past-summaries` が `{ weeks: string[], months: string[] }` を返す（DBにキャッシュ済みのものだけ）
+- `/api/weekly-summary?week_start=YYYY-MM-DD` と `/api/monthly-summary?month_start=YYYY-MM-01` がオプションの日付パラメータを受け付ける
+- 過去エントリは `WeeklySummaryCard` / `MonthlySummaryCard` コンポーネントで統一表示
 
 ## オンボーディング・初回体験フロー
 
@@ -226,6 +234,8 @@ Yoriの設計方針:
 - しんどさも嬉しさも同じように受け止める
 - 子どもの小さな成長・「できた」を一緒に喜ぶ
 - 質問は2〜3ターンに1回程度。受け止めて終わる返しを大切にする
+- **Markdownの装飾記号（`**`・`*`・`#`・`-`リストなど）は使わない**。プレーンテキストで返す（`【NG】` に明記済み）
+- UIでも `stripMarkdown()` 関数で二重に除去（`ChatClient.tsx`）
 
 ## 環境変数（.env.local / Vercel）
 
@@ -274,7 +284,14 @@ mood_score（-2〜+2）はカレンダー・週次サマリー・チャット上
 - ログ抽出（`lib/extract-log.ts`）は `max_tokens: 2048`。JSONをregexで抽出 (`\{[\s\S]*\}`)
 - 週次サマリー生成（`lib/generate-weekly-summary.ts`）も同様の構造。ログが2件以下の場合はフォールバック出力
 - `home/page.tsx` の挨拶生成は `max_tokens: 120`（1〜2文の短い出力）
+- チャット入力欄（`textarea`）は `onChange` でJS動的高さ制御。送信時は `inputRef.current.style.height = 'auto'` でリセット必須
 - お問い合わせ先: tokumori.ottie@gmail.com
+
+### モバイルタップ最適化（`globals.css`）
+
+- `-webkit-tap-highlight-color: transparent` — iOSのタップハイライトフラッシュ除去
+- `touch-action: manipulation` on `button, a` — ダブルタップズーム待機（300ms）を排除
+- `active:opacity-*` クラスには `transition-opacity` を付けない（即時フィードバックのため）
 
 ## Web検索のしくみ（`lib/web-search.ts` + `api/chat/route.ts`）
 
@@ -289,5 +306,11 @@ mood_score（-2〜+2）はカレンダー・週次サマリー・チャット上
 - `searchWeb(query)` でTavilyに問い合わせ、最大3件取得
 - 結果をsystem promptに追記してからストリーミング開始（ストリーミングループ自体は変更なし）
 - `TAVILY_API_KEY` 未設定・API失敗時は検索なしでフォールバック
+
+**フェーズ3: ソースリンクの送信**
+- AIテキストのストリーミングが完了後、DBへの保存が終わってから `\n__REFS__:JSON` 形式で検索ソースをクライアントに送信
+- DBに保存されるAIテキストにはソース情報を含めない（表示専用）
+- `ChatClient.tsx` がストリーム中に `__REFS__:` マーカーを検知・パースし、`Message.sources` に格納
+- `MessageRow` がAIメッセージの下に「参考サイト」として各ソースを外部リンク表示
 
 **SYSTEM_PROMPTへの明記**: Yoriが「検索できない」と言わないよう、system promptに検索機能があることを記載。
