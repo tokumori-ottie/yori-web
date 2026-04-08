@@ -38,6 +38,299 @@ function moodDotStyle(score: number | null): string {
   return 'bg-blue-400'
 }
 
+function ChevronRight() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <path d="M5 3l4 4-4 4" stroke="#9A8880" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ChevronDown() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <path d="M3 5l4 4 4-4" stroke="#9A8880" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function WeeklySummaryCard({ content, weekStart, label }: { content: WeeklySummaryContent; weekStart: string; label?: string }) {
+  return (
+    <div className="bg-yori-base border border-yori-light-border rounded-2xl p-5 flex flex-col gap-3">
+      <div className="flex items-baseline justify-between">
+        <p className="text-xs font-medium text-yori-accent-dark">{label ?? '今週のまとめ'}</p>
+        <p className="text-[10px] text-yori-muted">{formatWeekRange(weekStart)}</p>
+      </div>
+
+      {/* ムードチャート */}
+      <div className="flex justify-between items-end gap-1">
+        {content.mood_chart.map((entry) => (
+          <div key={entry.date} className="flex flex-col items-center gap-1">
+            <div className={`w-6 h-6 rounded-full ${moodDotStyle(entry.score)}`} />
+            <span className="text-[10px] text-yori-muted">{entry.day}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 感情サマリー */}
+      <div>
+        <p className="text-[11px] text-yori-muted mb-1">この週のあなた</p>
+        <p className="text-xs text-yori-text leading-relaxed">{content.emotion_summary}</p>
+      </div>
+
+      {/* 子どもの成長 */}
+      {content.achievements.length > 0 && (
+        <div>
+          <p className="text-[11px] text-yori-muted mb-1">小さな成長・できたこと</p>
+          <div className="flex flex-col gap-1">
+            {content.achievements.map((a, i) => (
+              <div key={i} className="flex items-start gap-1.5">
+                <span className="text-yori-avatar text-xs flex-shrink-0">•</span>
+                <p className="text-xs text-yori-text leading-relaxed">{a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 子どもの特性・困りごと */}
+      {content.child_difficulties && (
+        <div className="bg-yori-card rounded-xl p-3">
+          <p className="text-[11px] text-yori-accent-dark font-medium mb-1">相談のときのメモ</p>
+          <p className="text-[11px] text-yori-muted mb-1.5">子どもの特性・困りごと</p>
+          <p className="text-xs text-yori-text leading-relaxed">{content.child_difficulties}</p>
+        </div>
+      )}
+
+      {/* ねぎらい */}
+      <p className="text-xs text-yori-muted leading-relaxed">{content.encouragement}</p>
+    </div>
+  )
+}
+
+function MonthlySummaryCard({ content, monthStart }: { content: MonthlySummaryContent; monthStart: string }) {
+  return (
+    <div className="bg-yori-base border border-yori-light-border rounded-2xl p-5 flex flex-col gap-4">
+      <p className="text-xs font-medium text-yori-accent-dark">{formatMonth(monthStart)}のまとめ</p>
+
+      <div>
+        <p className="text-[11px] text-yori-muted mb-1">1ヶ月の振り返り</p>
+        <p className="text-xs text-yori-text leading-relaxed">{content.summary}</p>
+      </div>
+
+      {content.child_growth && (
+        <div>
+          <p className="text-[11px] text-yori-muted mb-1">子どもの成長・できたこと</p>
+          <p className="text-xs text-yori-text leading-relaxed">{content.child_growth}</p>
+        </div>
+      )}
+
+      {content.child_difficulties && (
+        <div className="bg-yori-card rounded-xl p-3">
+          <p className="text-[11px] text-yori-accent-dark font-medium mb-1">相談のときのメモ</p>
+          <p className="text-[11px] text-yori-muted mb-1.5">子どもの特性・困りごと</p>
+          <p className="text-xs text-yori-text leading-relaxed">{content.child_difficulties}</p>
+        </div>
+      )}
+
+      {content.top_tags.length > 0 && (
+        <div>
+          <p className="text-[11px] text-yori-muted mb-1.5">今月のテーマ</p>
+          <div className="flex flex-wrap gap-1.5">
+            {content.top_tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[11px] text-yori-accent bg-yori-card rounded-full px-2.5 py-0.5"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p className="text-xs text-yori-muted leading-relaxed">{content.encouragement}</p>
+    </div>
+  )
+}
+
+function PastWeeklySummaries() {
+  const [open, setOpen] = useState(false)
+  const [pastWeeks, setPastWeeks] = useState<string[] | null>(null)
+  const [loadingList, setLoadingList] = useState(false)
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [summaries, setSummaries] = useState<Record<string, WeeklyData>>({})
+  const [loadingSummary, setLoadingSummary] = useState<string | null>(null)
+
+  const handleOpen = () => {
+    setOpen(true)
+    if (pastWeeks === null) {
+      setLoadingList(true)
+      fetch('/api/past-summaries')
+        .then((r) => r.json())
+        .then((d) => setPastWeeks(d.weeks ?? []))
+        .catch(() => setPastWeeks([]))
+        .finally(() => setLoadingList(false))
+    }
+  }
+
+  const handleToggleWeek = (weekStart: string) => {
+    if (expanded === weekStart) {
+      setExpanded(null)
+      return
+    }
+    setExpanded(weekStart)
+    if (!summaries[weekStart]) {
+      setLoadingSummary(weekStart)
+      fetch(`/api/weekly-summary?week_start=${weekStart}`)
+        .then((r) => r.json())
+        .then((d: WeeklyData) => setSummaries((prev) => ({ ...prev, [weekStart]: d })))
+        .catch(() => {})
+        .finally(() => setLoadingSummary(null))
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        onClick={open ? () => setOpen(false) : handleOpen}
+        className="w-full text-left flex items-center justify-between px-4 py-2.5 text-xs text-yori-muted bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75 transition-opacity"
+      >
+        <span>過去のまとめ</span>
+        {open ? <ChevronDown /> : <ChevronRight />}
+      </button>
+
+      {open && (
+        <div className="flex flex-col gap-2 pl-2">
+          {loadingList && (
+            <p className="text-xs text-yori-muted px-2 py-1">読み込み中...</p>
+          )}
+
+          {pastWeeks !== null && pastWeeks.length === 0 && (
+            <p className="text-xs text-yori-muted px-2 py-1">過去のまとめはまだありません。</p>
+          )}
+
+          {pastWeeks?.map((weekStart) => (
+            <div key={weekStart} className="flex flex-col gap-2">
+              <button
+                onClick={() => handleToggleWeek(weekStart)}
+                className="w-full text-left flex items-center justify-between px-4 py-3 text-xs bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75 transition-opacity"
+              >
+                <span className="text-yori-text">{formatWeekRange(weekStart)}</span>
+                {loadingSummary === weekStart ? (
+                  <span className="text-yori-muted text-[10px]">読込中...</span>
+                ) : expanded === weekStart ? (
+                  <ChevronDown />
+                ) : (
+                  <ChevronRight />
+                )}
+              </button>
+              {expanded === weekStart && summaries[weekStart]?.content && (
+                <WeeklySummaryCard
+                  content={summaries[weekStart].content!}
+                  weekStart={weekStart}
+                  label="週のまとめ"
+                />
+              )}
+              {expanded === weekStart && summaries[weekStart] && !summaries[weekStart].content && (
+                <p className="text-xs text-yori-muted px-2">この週のまとめはありません。</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PastMonthlySummaries() {
+  const [open, setOpen] = useState(false)
+  const [pastMonths, setPastMonths] = useState<string[] | null>(null)
+  const [loadingList, setLoadingList] = useState(false)
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [summaries, setSummaries] = useState<Record<string, MonthlyData>>({})
+  const [loadingSummary, setLoadingSummary] = useState<string | null>(null)
+
+  const handleOpen = () => {
+    setOpen(true)
+    if (pastMonths === null) {
+      setLoadingList(true)
+      fetch('/api/past-summaries')
+        .then((r) => r.json())
+        .then((d) => setPastMonths(d.months ?? []))
+        .catch(() => setPastMonths([]))
+        .finally(() => setLoadingList(false))
+    }
+  }
+
+  const handleToggleMonth = (monthStart: string) => {
+    if (expanded === monthStart) {
+      setExpanded(null)
+      return
+    }
+    setExpanded(monthStart)
+    if (!summaries[monthStart]) {
+      setLoadingSummary(monthStart)
+      fetch(`/api/monthly-summary?month_start=${monthStart}`)
+        .then((r) => r.json())
+        .then((d: MonthlyData) => setSummaries((prev) => ({ ...prev, [monthStart]: d })))
+        .catch(() => {})
+        .finally(() => setLoadingSummary(null))
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        onClick={open ? () => setOpen(false) : handleOpen}
+        className="w-full text-left flex items-center justify-between px-4 py-2.5 text-xs text-yori-muted bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75 transition-opacity"
+      >
+        <span>過去のまとめ</span>
+        {open ? <ChevronDown /> : <ChevronRight />}
+      </button>
+
+      {open && (
+        <div className="flex flex-col gap-2 pl-2">
+          {loadingList && (
+            <p className="text-xs text-yori-muted px-2 py-1">読み込み中...</p>
+          )}
+
+          {pastMonths !== null && pastMonths.length === 0 && (
+            <p className="text-xs text-yori-muted px-2 py-1">過去のまとめはまだありません。</p>
+          )}
+
+          {pastMonths?.map((monthStart) => (
+            <div key={monthStart} className="flex flex-col gap-2">
+              <button
+                onClick={() => handleToggleMonth(monthStart)}
+                className="w-full text-left flex items-center justify-between px-4 py-3 text-xs bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75 transition-opacity"
+              >
+                <span className="text-yori-text">{formatMonth(monthStart)}</span>
+                {loadingSummary === monthStart ? (
+                  <span className="text-yori-muted text-[10px]">読込中...</span>
+                ) : expanded === monthStart ? (
+                  <ChevronDown />
+                ) : (
+                  <ChevronRight />
+                )}
+              </button>
+              {expanded === monthStart && summaries[monthStart]?.content && (
+                <MonthlySummaryCard
+                  content={summaries[monthStart].content!}
+                  monthStart={monthStart}
+                />
+              )}
+              {expanded === monthStart && summaries[monthStart] && !summaries[monthStart].content && (
+                <p className="text-xs text-yori-muted px-2">この月のまとめはありません。</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function MonthlySummarySection() {
   const [data, setData] = useState<MonthlyData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -62,81 +355,37 @@ function MonthlySummarySection() {
 
   if (!data?.content) {
     return (
-      <div className="bg-yori-base border border-yori-light-border rounded-2xl p-5">
-        <p className="text-xs font-medium text-yori-accent-dark mb-1">
-          {data ? formatMonth(data.monthStart) : '先月'}のまとめ
-        </p>
-        <p className="text-xs text-yori-muted leading-relaxed">
-          先月の記録がまだありません。<br />
-          話すと、自動で記録されます。
-        </p>
+      <div className="flex flex-col gap-2">
+        <div className="bg-yori-base border border-yori-light-border rounded-2xl p-5">
+          <p className="text-xs font-medium text-yori-accent-dark mb-1">
+            {data ? formatMonth(data.monthStart) : '先月'}のまとめ
+          </p>
+          <p className="text-xs text-yori-muted leading-relaxed">
+            先月の記録がまだありません。<br />
+            話すと、自動で記録されます。
+          </p>
+        </div>
+        <PastMonthlySummaries />
       </div>
     )
   }
 
-  const { content, monthStart } = data
-
   return (
-    <div className="bg-yori-base border border-yori-light-border rounded-2xl p-5 flex flex-col gap-4">
-      <p className="text-xs font-medium text-yori-accent-dark">{formatMonth(monthStart)}のまとめ</p>
-
-      {/* 1ヶ月サマリー */}
-      <div>
-        <p className="text-[11px] text-yori-muted mb-1">1ヶ月の振り返り</p>
-        <p className="text-xs text-yori-text leading-relaxed">{content.summary}</p>
-      </div>
-
-      {/* 子どもの成長 */}
-      {content.child_growth && (
-        <div>
-          <p className="text-[11px] text-yori-muted mb-1">子どもの成長・できたこと</p>
-          <p className="text-xs text-yori-text leading-relaxed">{content.child_growth}</p>
-        </div>
-      )}
-
-      {/* 子どもの特性・困りごと */}
-      {content.child_difficulties && (
-        <div className="bg-yori-card rounded-xl p-3">
-          <p className="text-[11px] text-yori-accent-dark font-medium mb-1">相談のときのメモ</p>
-          <p className="text-[11px] text-yori-muted mb-1.5">子どもの特性・困りごと</p>
-          <p className="text-xs text-yori-text leading-relaxed">{content.child_difficulties}</p>
-        </div>
-      )}
-
-      {/* よく出たタグ */}
-      {content.top_tags.length > 0 && (
-        <div>
-          <p className="text-[11px] text-yori-muted mb-1.5">今月のテーマ</p>
-          <div className="flex flex-wrap gap-1.5">
-            {content.top_tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[11px] text-yori-accent bg-yori-card rounded-full px-2.5 py-0.5"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ねぎらい */}
-      <p className="text-xs text-yori-muted leading-relaxed">{content.encouragement}</p>
+    <div className="flex flex-col gap-2">
+      <MonthlySummaryCard content={data.content} monthStart={data.monthStart} />
+      <PastMonthlySummaries />
     </div>
   )
 }
 
 function WeeklySummariesSection() {
-  const [items, setItems] = useState<WeeklyData[]>([])
+  const [data, setData] = useState<WeeklyData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 現在週の週次サマリーを取得（キャッシュがあれば即返る）
     fetch('/api/weekly-summary')
       .then((r) => r.json())
-      .then((d: WeeklyData) => {
-        if (d.content) setItems([d])
-      })
+      .then((d: WeeklyData) => setData(d))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
@@ -151,77 +400,25 @@ function WeeklySummariesSection() {
     )
   }
 
-  if (items.length === 0) {
+  if (!data?.content) {
     return (
-      <div className="bg-yori-base border border-yori-light-border rounded-2xl p-5">
-        <p className="text-xs font-medium text-yori-accent-dark mb-1">今週のまとめ</p>
-        <p className="text-xs text-yori-muted leading-relaxed">
-          今週の記録がまだありません。<br />
-          話すと、自動でまとめられます。
-        </p>
+      <div className="flex flex-col gap-2">
+        <div className="bg-yori-base border border-yori-light-border rounded-2xl p-5">
+          <p className="text-xs font-medium text-yori-accent-dark mb-1">今週のまとめ</p>
+          <p className="text-xs text-yori-muted leading-relaxed">
+            今週の記録がまだありません。<br />
+            話すと、自動でまとめられます。
+          </p>
+        </div>
+        <PastWeeklySummaries />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {items.map(({ content, weekStart }) => {
-        if (!content) return null
-        return (
-          <div
-            key={weekStart}
-            className="bg-yori-base border border-yori-light-border rounded-2xl p-5 flex flex-col gap-3"
-          >
-            <div className="flex items-baseline justify-between">
-              <p className="text-xs font-medium text-yori-accent-dark">今週のまとめ</p>
-              <p className="text-[10px] text-yori-muted">{formatWeekRange(weekStart)}</p>
-            </div>
-
-            {/* ムードチャート */}
-            <div className="flex justify-between items-end gap-1">
-              {content.mood_chart.map((entry) => (
-                <div key={entry.date} className="flex flex-col items-center gap-1">
-                  <div className={`w-6 h-6 rounded-full ${moodDotStyle(entry.score)}`} />
-                  <span className="text-[10px] text-yori-muted">{entry.day}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* 感情サマリー */}
-            <div>
-              <p className="text-[11px] text-yori-muted mb-1">今週のあなた</p>
-              <p className="text-xs text-yori-text leading-relaxed">{content.emotion_summary}</p>
-            </div>
-
-            {/* 子どもの成長 */}
-            {content.achievements.length > 0 && (
-              <div>
-                <p className="text-[11px] text-yori-muted mb-1">小さな成長・できたこと</p>
-                <div className="flex flex-col gap-1">
-                  {content.achievements.map((a, i) => (
-                    <div key={i} className="flex items-start gap-1.5">
-                      <span className="text-yori-avatar text-xs flex-shrink-0">•</span>
-                      <p className="text-xs text-yori-text leading-relaxed">{a}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 子どもの特性・困りごと */}
-            {content.child_difficulties && (
-              <div className="bg-yori-card rounded-xl p-3">
-                <p className="text-[11px] text-yori-accent-dark font-medium mb-1">相談のときのメモ</p>
-                <p className="text-[11px] text-yori-muted mb-1.5">子どもの特性・困りごと</p>
-                <p className="text-xs text-yori-text leading-relaxed">{content.child_difficulties}</p>
-              </div>
-            )}
-
-            {/* ねぎらい */}
-            <p className="text-xs text-yori-muted leading-relaxed">{content.encouragement}</p>
-          </div>
-        )
-      })}
+    <div className="flex flex-col gap-2">
+      <WeeklySummaryCard content={data.content} weekStart={data.weekStart} />
+      <PastWeeklySummaries />
     </div>
   )
 }
