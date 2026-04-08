@@ -254,7 +254,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
         <span className="text-base font-medium text-yori-accent-dark tracking-tight">Yori</span>
         <Link
           href="/account"
-          className="text-xs text-yori-muted active:opacity-75 transition-opacity"
+          className="text-xs text-yori-muted active:opacity-75"
         >
           アカウント
         </Link>
@@ -264,7 +264,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
       {weekMoodChart.length > 0 && (
         <Link
           href="/reports"
-          className="flex items-center gap-3 px-5 py-2 bg-yori-base border-b border-yori-light-border active:opacity-75 transition-opacity"
+          className="flex items-center gap-3 px-5 py-2 bg-yori-base border-b border-yori-light-border active:opacity-75"
         >
           <span className="text-[10px] text-yori-muted flex-shrink-0">今週</span>
           <div className="flex gap-1.5 items-end">
@@ -302,14 +302,14 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
               )}
               <Link
                 href="/logs"
-                className="text-xs text-yori-accent mt-1 inline-block active:opacity-75 transition-opacity"
+                className="text-xs text-yori-accent mt-1 inline-block active:opacity-75"
               >
                 記録を見る →
               </Link>
             </div>
             <button
               onClick={startNewSession}
-              className="w-full bg-yori-accent text-yori-base text-xs font-medium rounded-xl py-2.5 transition-opacity active:opacity-80"
+              className="w-full bg-yori-accent text-yori-base text-xs font-medium rounded-xl py-2.5 active:opacity-80"
             >
               また話す
             </button>
@@ -331,7 +331,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
             <button
               onClick={endSession}
               disabled={isEnding}
-              className="w-full bg-yori-card text-yori-accent text-xs font-medium rounded-xl py-2.5 disabled:opacity-50 active:opacity-75 transition-opacity"
+              className="w-full bg-yori-card text-yori-accent text-xs font-medium rounded-xl py-2.5 disabled:opacity-50 active:opacity-75"
             >
               {isEnding ? '保存中…' : '今日の話を終える'}
             </button>
@@ -358,7 +358,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
           <button
             onClick={sendMessage}
             disabled={!input.trim() || isLoading || !sessionId || logSaved}
-            className="w-9 h-9 rounded-full bg-yori-accent flex-shrink-0 flex items-center justify-center disabled:opacity-40 active:opacity-75 transition-opacity mb-0.5"
+            className="w-9 h-9 rounded-full bg-yori-accent flex-shrink-0 flex items-center justify-center disabled:opacity-40 active:opacity-75 mb-0.5"
             aria-label="送信"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -384,7 +384,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
         </div>
         <Link
           href="/logs"
-          className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75 transition-opacity"
+          className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path d="M4 6h12M4 10h8M4 14h6" stroke="#B5A89E" strokeWidth="1.5" strokeLinecap="round" />
@@ -393,7 +393,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
         </Link>
         <Link
           href="/reports"
-          className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75 transition-opacity"
+          className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path

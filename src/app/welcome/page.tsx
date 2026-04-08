@@ -55,7 +55,7 @@ export default async function WelcomePage() {
       <div className="pb-12">
         <Link
           href="/home"
-          className="block w-full bg-yori-accent text-yori-base rounded-2xl py-4 text-sm font-medium text-center active:opacity-80 transition-opacity"
+          className="block w-full bg-yori-accent text-yori-base rounded-2xl py-4 text-sm font-medium text-center active:opacity-80"
         >
           話してみる
         </Link>

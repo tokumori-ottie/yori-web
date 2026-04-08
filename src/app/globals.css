@@ -3,8 +3,19 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+    cursor: pointer;
   }
 }

@@ -194,7 +194,7 @@ function PastWeeklySummaries() {
     <div className="flex flex-col gap-2">
       <button
         onClick={open ? () => setOpen(false) : handleOpen}
-        className="w-full text-left flex items-center justify-between px-4 py-2.5 text-xs text-yori-muted bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75 transition-opacity"
+        className="w-full text-left flex items-center justify-between px-4 py-2.5 text-xs text-yori-muted bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75"
       >
         <span>過去のまとめ</span>
         {open ? <ChevronDown /> : <ChevronRight />}
@@ -214,7 +214,7 @@ function PastWeeklySummaries() {
             <div key={weekStart} className="flex flex-col gap-2">
               <button
                 onClick={() => handleToggleWeek(weekStart)}
-                className="w-full text-left flex items-center justify-between px-4 py-3 text-xs bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75 transition-opacity"
+                className="w-full text-left flex items-center justify-between px-4 py-3 text-xs bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75"
               >
                 <span className="text-yori-text">{formatWeekRange(weekStart)}</span>
                 {loadingSummary === weekStart ? (
@@ -283,7 +283,7 @@ function PastMonthlySummaries() {
     <div className="flex flex-col gap-2">
       <button
         onClick={open ? () => setOpen(false) : handleOpen}
-        className="w-full text-left flex items-center justify-between px-4 py-2.5 text-xs text-yori-muted bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75 transition-opacity"
+        className="w-full text-left flex items-center justify-between px-4 py-2.5 text-xs text-yori-muted bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75"
       >
         <span>過去のまとめ</span>
         {open ? <ChevronDown /> : <ChevronRight />}
@@ -303,7 +303,7 @@ function PastMonthlySummaries() {
             <div key={monthStart} className="flex flex-col gap-2">
               <button
                 onClick={() => handleToggleMonth(monthStart)}
-                className="w-full text-left flex items-center justify-between px-4 py-3 text-xs bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75 transition-opacity"
+                className="w-full text-left flex items-center justify-between px-4 py-3 text-xs bg-yori-base border border-yori-light-border rounded-2xl active:opacity-75"
               >
                 <span className="text-yori-text">{formatMonth(monthStart)}</span>
                 {loadingSummary === monthStart ? (
@@ -447,7 +447,7 @@ export default function ReportsPage() {
 
       {/* タブバー */}
       <div className="sticky bottom-0 flex border-t border-yori-light-border bg-yori-base">
-        <Link href="/home" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75 transition-opacity">
+        <Link href="/home" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path
               d="M4 4h12a1 1 0 011 1v7a1 1 0 01-1 1H7l-3.5 2.5V5a1 1 0 011-1z"
@@ -458,7 +458,7 @@ export default function ReportsPage() {
           </svg>
           <span className="text-[10px]">チャット</span>
         </Link>
-        <Link href="/logs" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75 transition-opacity">
+        <Link href="/logs" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path d="M4 6h12M4 10h8M4 14h6" stroke="#B5A89E" strokeWidth="1.5" strokeLinecap="round" />
           </svg>

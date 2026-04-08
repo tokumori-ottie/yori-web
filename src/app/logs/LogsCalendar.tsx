@@ -88,7 +88,7 @@ export default function LogsCalendar({ logs }: { logs: Log[] }) {
         <div className="flex items-center justify-between mb-3">
           <button
             onClick={prevMonth}
-            className="w-8 h-8 flex items-center justify-center text-yori-muted text-lg active:opacity-75 transition-opacity"
+            className="w-8 h-8 flex items-center justify-center text-yori-muted text-lg active:opacity-75"
           >
             ‹
           </button>
@@ -98,7 +98,7 @@ export default function LogsCalendar({ logs }: { logs: Log[] }) {
           <button
             onClick={nextMonth}
             disabled={isCurrentMonth}
-            className="w-8 h-8 flex items-center justify-center text-yori-muted text-lg active:opacity-75 transition-opacity disabled:opacity-20"
+            className="w-8 h-8 flex items-center justify-center text-yori-muted text-lg active:opacity-75 disabled:opacity-20"
           >
             ›
           </button>
@@ -135,7 +135,7 @@ export default function LogsCalendar({ logs }: { logs: Log[] }) {
                 {latestLog ? (
                   <Link
                     href={`/logs/${latestLog.id}`}
-                    className="flex flex-col items-center gap-0.5 active:opacity-75 transition-opacity"
+                    className="flex flex-col items-center gap-0.5 active:opacity-75"
                   >
                     <span
                       className={`text-xs w-6 h-6 flex items-center justify-center rounded-full font-medium ${
@@ -183,7 +183,7 @@ export default function LogsCalendar({ logs }: { logs: Log[] }) {
             <Link
               key={log.id}
               href={`/logs/${log.id}`}
-              className="bg-yori-base border border-yori-light-border rounded-2xl px-4 py-3.5 flex flex-col gap-1.5 active:opacity-75 transition-opacity"
+              className="bg-yori-base border border-yori-light-border rounded-2xl px-4 py-3.5 flex flex-col gap-1.5 active:opacity-75"
             >
               <div className="flex items-baseline gap-2">
                 <p className="text-xs text-yori-muted">{formatDate(log.date)}</p>

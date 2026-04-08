@@ -22,7 +22,7 @@ export default async function LogsPage() {
     <main className="min-h-screen bg-yori-bg flex flex-col max-w-sm mx-auto">
 
       <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-yori-light-border bg-yori-base">
-        <Link href="/home" className="text-xs text-yori-muted active:opacity-75 transition-opacity">← 戻る</Link>
+        <Link href="/home" className="text-xs text-yori-muted active:opacity-75">← 戻る</Link>
         <span className="text-sm font-medium text-yori-accent-dark">記録</span>
         <span className="w-10" />
       </div>
@@ -42,7 +42,7 @@ export default async function LogsPage() {
 
       {/* タブバー */}
       <div className="sticky bottom-0 flex border-t border-yori-light-border bg-yori-base">
-        <Link href="/home" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75 transition-opacity">
+        <Link href="/home" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path
               d="M4 4h12a1 1 0 011 1v7a1 1 0 01-1 1H7l-3.5 2.5V5a1 1 0 011-1z"
@@ -59,7 +59,7 @@ export default async function LogsPage() {
           </svg>
           <span className="text-[10px]">記録</span>
         </div>
-        <Link href="/reports" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75 transition-opacity">
+        <Link href="/reports" className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path d="M3 14l4-4 3 3 4-5 3 3" stroke="#B5A89E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
