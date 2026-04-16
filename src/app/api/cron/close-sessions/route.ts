@@ -72,6 +72,7 @@ export async function GET(request: Request) {
           achievements: extracted.achievements ?? null,
           difficulties: extracted.difficulties ?? null,
           tags: extracted.tags,
+          mood_score: extracted.mood_score ?? 0,
         },
         { onConflict: 'session_id' }
       )
