@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
@@ -55,8 +56,10 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
   const [endError, setEndError] = useState(false)
   const [confirmEnd, setConfirmEnd] = useState(false)
   const [showFirstHint, setShowFirstHint] = useState(false)
+  const [navTarget, setNavTarget] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const router = useRouter()
 
   useEffect(() => {
     initSession()
@@ -273,6 +276,14 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
 
   const hasConversation = messages.filter((m) => m.id !== 'initial').length >= 2
 
+  const handleTabNav = (href: string) => {
+    if (input.trim()) {
+      setNavTarget(href)
+    } else {
+      router.push(href)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-yori-base flex flex-col max-w-sm mx-auto">
 
@@ -429,17 +440,17 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
           </svg>
           <span className="text-[10px]">チャット</span>
         </div>
-        <Link
-          href="/logs"
+        <button
+          onClick={() => handleTabNav('/logs')}
           className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path d="M4 6h12M4 10h8M4 14h6" stroke="#B5A89E" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           <span className="text-[10px]">記録</span>
-        </Link>
-        <Link
-          href="/reports"
+        </button>
+        <button
+          onClick={() => handleTabNav('/reports')}
           className="flex-1 py-2.5 flex flex-col items-center gap-1 text-yori-very-muted active:opacity-75"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -452,8 +463,33 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
             />
           </svg>
           <span className="text-[10px]">レポート</span>
-        </Link>
+        </button>
       </div>
+
+      {/* 入力中タブ遷移の確認ダイアログ */}
+      {navTarget && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 pb-8 px-6">
+          <div className="w-full max-w-sm bg-yori-base rounded-2xl px-5 py-5 flex flex-col gap-4">
+            <p className="text-sm text-yori-text text-center leading-relaxed">
+              入力中のテキストが消えますが、<br />移動しますか？
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setNavTarget(null)}
+                className="flex-1 bg-yori-card text-yori-muted text-sm font-medium rounded-xl py-3 active:opacity-75"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => { setNavTarget(null); router.push(navTarget) }}
+                className="flex-1 bg-yori-accent text-yori-base text-sm font-medium rounded-xl py-3 active:opacity-75"
+              >
+                移動する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </main>
   )
