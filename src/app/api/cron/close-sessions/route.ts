@@ -91,12 +91,12 @@ export async function GET(request: Request) {
     } catch (err) {
       console.error(`Failed to process session ${session.id}:`, err)
       // 最終手段: セッションだけでも閉じる
-      await supabase
-        .from('chat_sessions')
-        .update({ ended_at: new Date().toISOString() })
-        .eq('id', session.id)
-        .then(() => {})
-        .catch(() => {})
+      try {
+        await supabase
+          .from('chat_sessions')
+          .update({ ended_at: new Date().toISOString() })
+          .eq('id', session.id)
+      } catch {}
     }
   }
 
