@@ -56,28 +56,32 @@ export async function GET(request: Request) {
         continue
       }
 
-      // ログ抽出
-      const extracted = await extractLogFromMessages(
-        messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
-      )
+      // ログ抽出（失敗してもセッションは必ず閉じる）
+      try {
+        const extracted = await extractLogFromMessages(
+          messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+        )
 
-      // daily_logs に保存（upsert: 同日に複数セッションあっても上書き）
-      await supabase.from('daily_logs').upsert(
-        {
-          user_id: session.user_id,
-          session_id: session.id,
-          date: session.date,
-          events: extracted.events,
-          feelings: extracted.feelings,
-          achievements: extracted.achievements ?? null,
-          difficulties: extracted.difficulties ?? null,
-          tags: extracted.tags,
-          mood_score: extracted.mood_score ?? 0,
-        },
-        { onConflict: 'session_id' }
-      )
+        // daily_logs に保存（upsert: 同日に複数セッションあっても上書き）
+        await supabase.from('daily_logs').upsert(
+          {
+            user_id: session.user_id,
+            session_id: session.id,
+            date: session.date,
+            events: extracted.events,
+            feelings: extracted.feelings,
+            achievements: extracted.achievements ?? null,
+            difficulties: extracted.difficulties ?? null,
+            tags: extracted.tags,
+            mood_score: extracted.mood_score ?? 0,
+          },
+          { onConflict: 'session_id' }
+        )
+      } catch (extractErr) {
+        console.error(`Failed to extract log for session ${session.id}:`, extractErr)
+      }
 
-      // セッションを終了済みにマーク
+      // セッションを終了済みにマーク（ログ抽出の成否に関わらず必ず実行）
       await supabase
         .from('chat_sessions')
         .update({ ended_at: new Date().toISOString() })
@@ -86,6 +90,13 @@ export async function GET(request: Request) {
       processed++
     } catch (err) {
       console.error(`Failed to process session ${session.id}:`, err)
+      // 最終手段: セッションだけでも閉じる
+      await supabase
+        .from('chat_sessions')
+        .update({ ended_at: new Date().toISOString() })
+        .eq('id', session.id)
+        .then(() => {})
+        .catch(() => {})
     }
   }
 
