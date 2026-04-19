@@ -247,6 +247,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
     } catch (err) {
       console.error(err)
       setEndError(true)
+      setConfirmEnd(false)
     } finally {
       setIsEnding(false)
     }
@@ -365,7 +366,7 @@ export default function ChatClient({ userId, initialGreeting, weekMoodChart }: P
                     キャンセル
                   </button>
                   <button
-                    onClick={() => { setConfirmEnd(false); endSession() }}
+                    onClick={() => endSession()}
                     disabled={isEnding}
                     className="flex-1 bg-yori-card text-yori-accent text-xs font-medium rounded-xl py-2.5 disabled:opacity-50 active:opacity-75"
                   >
